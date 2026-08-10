@@ -1949,7 +1949,16 @@ editRemarkInput.addEventListener('input',()=>renderRemarkCombo('edit'));
 remarkInput.addEventListener('keydown',event=>{
     if(event.key==='Enter'){
         event.preventDefault();
-        commitRemark('add');
+
+        // 备注栏有内容：先把当前备注确认成标签。
+        if(clean(remarkInput.value)){
+            commitRemark('add');
+            return;
+        }
+
+        // 备注栏已经为空、焦点仍停留在备注栏：
+        // 再按一次 Enter，等同点击“添加”按钮。
+        addEntry();
     }
 });
 editRemarkInput.addEventListener('keydown',event=>{
