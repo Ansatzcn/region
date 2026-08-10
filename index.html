@@ -1489,7 +1489,7 @@ async function adoptRemote(expectedFingerprint,showResult){
     state=latest.state;
     render();
     record(state,latest.sha);
-    setStatus('online','已连接');
+    setStatus('online','公开阅读 · 管理已连接');
     if(showResult)showToast(`已从 GitHub 更新 ${state.entries.length} 个条目`,'success');
     return{ok:true,conflict:false};
 }
@@ -1524,7 +1524,7 @@ async function performSync(showResult,interactive){
 
         const sha=await writeRemote(local,null);
         record(local,sha);
-        setStatus('online','已连接');
+        setStatus('online','公开阅读 · 管理已连接');
         showToast(`已重新创建云端文件并同步 ${local.entries.length} 个条目`,'success');
         return{ok:true,conflict:false,uploadedFingerprint:localFp};
     }
@@ -1532,7 +1532,7 @@ async function performSync(showResult,interactive){
     if(!remote.exists){
         const sha=await writeRemote(local,null);
         record(local,sha);
-        setStatus('online','已连接');
+        setStatus('online','公开阅读 · 管理已连接');
         if(showResult)showToast(`已创建云端文件并同步 ${local.entries.length} 个条目`,'success');
         return{ok:true,conflict:false,uploadedFingerprint:localFp};
     }
@@ -1541,7 +1541,7 @@ async function performSync(showResult,interactive){
 
     if(localFp===remoteFp){
         record(local,remote.sha);
-        setStatus('online','已连接');
+        setStatus('online','公开阅读 · 管理已连接');
         if(showResult)showToast('本地与云端已一致','success');
         return{ok:true,conflict:false};
     }
@@ -1552,7 +1552,7 @@ async function performSync(showResult,interactive){
     if(hasBaseline&&localChanged&&!remoteChanged){
         const sha=await writeRemote(local,remote.sha);
         record(local,sha);
-        setStatus('online','已连接');
+        setStatus('online','公开阅读 · 管理已连接');
         if(showResult)showToast(`成功同步 ${local.entries.length} 个条目到 GitHub`,'success');
         return{ok:true,conflict:false,uploadedFingerprint:localFp};
     }
@@ -1576,7 +1576,7 @@ async function performSync(showResult,interactive){
         backup(remote.state,'remote_before_local_override');
         const sha=await writeRemote(local,remote.sha);
         record(local,sha);
-        setStatus('online','已连接');
+        setStatus('online','公开阅读 · 管理已连接');
         showToast('已用本地数据覆盖云端','success');
         return{ok:true,conflict:false,uploadedFingerprint:localFp};
     }
@@ -1698,32 +1698,155 @@ function loadCachedState(){
     try{return normalizeState(JSON.parse(stored))}catch(e){return null}
 }
 async function loadPublic(){
+    // 公开文件只用于普通访客阅读。
+    // 管理员绝不能用 GitHub Pages 上可能延迟发布的公开文件覆盖管理数据。
     setStatus('syncing','正在读取公开数据…');
     try{
         const response=await fetch(publicDataUrl(),{cache:'no-store'});
         if(!response.ok)throw new Error(`HTTP ${response.status}`);
-        const publicState=normalizeState(await response.json());
-        const localState=loadCachedState();
-        const hasBaseline=admin()&&meta.target===target()&&typeof meta.lastSyncedFingerprint==='string';
-        const localUnsynced=Boolean(localState&&hasBaseline&&fingerprint(localState)!==meta.lastSyncedFingerprint);
-
-        state=localUnsynced?localState:publicState;
+        state=normalizeState(await response.json());
         render();
-
-        if(localUnsynced){
-            setStatus('offline','公开阅读 · 有未同步管理修改');
-            lastSyncTime.textContent='显示当前浏览器中的未同步管理数据';
-        }else{
-            setStatus('online',admin()?'公开阅读 · 管理已配置':'公开阅读');
-            lastSyncTime.textContent=`公开数据 · ${state.entries.length} 条`;
-        }
+        setStatus('online','公开阅读');
+        lastSyncTime.textContent=`公开数据 · ${state.entries.length} 条`;
     }catch(error){
         console.error(error);
-        const local=loadCachedState();
-        state=local||{entries:[],remarks:[]};
+        const cached=loadCachedState();
+        state=cached||{entries:[],remarks:[]};
         render();
         setStatus('offline','公开数据读取失败');
-        lastSyncTime.textContent=local?'暂时显示浏览器缓存':`请确认 ${PUBLIC_FILE} 与网页位于同一发布目录`;
+        lastSyncTime.textContent=cached?'暂时显示浏览器缓存':`请确认 ${PUBLIC_FILE} 与网页位于同一发布目录`;
+    }
+}
+
+// ---------- 管理员启动读取 ----------
+async function loadAdminState(){
+    // 管理员刷新时的数据权威顺序：
+    // 1. 本地缓存：保护刚编辑但尚未同步的数据；
+    // 2. GitHub Contents API：读取真正的云端最新文件；
+    // 3. meta.lastSyncedFingerprint：判断哪一侧发生了修改。
+    // 绝不读取公开 Pages 文件参与管理端同步判断。
+    setStatus('syncing','正在读取管理数据…');
+    ensureTarget();
+
+    const cached=loadCachedState();
+    hasStored=Boolean(lg(STATE_KEY));
+    const baseline=meta.target===target()?meta.lastSyncedFingerprint:null;
+    const hasBaseline=typeof baseline==='string';
+
+    try{
+        const remote=await readRemote();
+
+        if(!remote.exists){
+            if(cached){
+                state=cached;
+                render();
+                setStatus('offline','管理已连接 · 云端文件不存在');
+                lastSyncTime.textContent='已保留本地数据；请手动同步以决定是否创建云端文件';
+            }else{
+                state={entries:[],remarks:[]};
+                render();
+                setStatus('online','管理已连接');
+                lastSyncTime.textContent='云端数据文件尚未创建';
+            }
+            return;
+        }
+
+        const remoteFp=fingerprint(remote.state);
+
+        if(!cached){
+            // 本地缓存不存在时，云端是唯一可靠来源。
+            state=remote.state;
+            render();
+            record(state,remote.sha);
+            setStatus('online','公开阅读 · 管理已连接');
+            return;
+        }
+
+        const localFp=fingerprint(cached);
+
+        if(localFp===remoteFp){
+            // 本地和 GitHub 完全一致。
+            state=cached;
+            render();
+            record(state,remote.sha);
+            setStatus('online','公开阅读 · 管理已连接');
+            return;
+        }
+
+        if(hasBaseline){
+            const localChanged=localFp!==baseline;
+            const remoteChanged=remoteFp!==baseline;
+
+            if(localChanged&&!remoteChanged){
+                // 只有本地变了：保留本地，并自动上传。
+                state=cached;
+                render();
+                setStatus('offline','待同步');
+                lastSyncTime.textContent='发现本地未同步修改';
+                scheduleSync();
+                return;
+            }
+
+            if(!localChanged&&remoteChanged){
+                // 只有云端变了：采用 GitHub 最新数据。
+                backup(cached,'before_startup_remote_replace');
+                state=remote.state;
+                render();
+                record(state,remote.sha);
+                setStatus('online','公开阅读 · 管理已连接');
+                return;
+            }
+
+            if(localChanged&&remoteChanged){
+                // 两边都变了：绝不自动覆盖任何一边。
+                state=cached;
+                render();
+                setStatus('offline','存在同步冲突');
+                lastSyncTime.textContent='本地和 GitHub 都有修改；请点击“同步”选择版本';
+                showToast('检测到本地和 GitHub 都有修改，已保留本地数据，未自动覆盖任何内容','error');
+                return;
+            }
+        }
+
+        // 没有可靠基线且两边不同：同样禁止自动覆盖。
+        state=cached;
+        render();
+        setStatus('offline','需要确认同步');
+        lastSyncTime.textContent='本地与 GitHub 数据不同；请点击“同步”选择版本';
+        showToast('本地与 GitHub 数据不同，已保留本地数据，请手动同步确认版本','info');
+    }catch(error){
+        console.error(error);
+
+        if(error.status===401){
+            // Token 失效时也不能让公开 Pages 文件覆盖管理缓存。
+            config.token='';
+            updateAdminUI();
+
+            if(cached){
+                state=cached;
+                render();
+                setStatus('offline','Token 已失效 · 本地数据已保护');
+                lastSyncTime.textContent='已保留当前浏览器中的管理数据；重新配置 Token 后再同步';
+                showToast('管理 Token 已失效；已保留本地数据，没有读取公开旧文件覆盖它','error');
+            }else{
+                await loadPublic();
+                showToast('管理 Token 已失效，当前已切换为公开阅读','error');
+            }
+            return;
+        }
+
+        // 网络/API 异常时优先保留管理缓存，绝不以公开旧文件覆盖。
+        if(cached){
+            state=cached;
+            render();
+            setStatus('offline','管理云端暂不可用');
+            lastSyncTime.textContent='已保留本地管理数据，未执行覆盖';
+            showToast(`GitHub 管理数据读取失败：${apiErrorMessage(error)}；已保留本地数据`,'error');
+        }else{
+            setStatus('offline','管理云端读取失败');
+            lastSyncTime.textContent='没有可恢复的本地管理数据';
+            showToast(`GitHub 管理数据读取失败：${apiErrorMessage(error)}`,'error');
+        }
     }
 }
 
@@ -1963,9 +2086,12 @@ loadMeta();
 loadConfig();
 updateAdminUI();
 updateSyncTime();
-loadPublic().then(()=>{
-    if(validConfig())sync(false,false);
-});
+
+if(validConfig()){
+    loadAdminState();
+}else{
+    loadPublic();
+}
 })();
 </script>
 </body>
