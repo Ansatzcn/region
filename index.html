@@ -1,0 +1,1949 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="app-build" content="2026-08-10-region-v1">
+<title>Region</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+    min-height:100vh;
+    padding:2rem 1rem 4rem;
+    background:#f5f7fa;
+    color:#0f172a;
+    font-family:"Times New Roman","Microsoft YaHei","PingFang SC",serif
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+
+.container{
+    width:min(100%,1100px);
+    margin:auto;
+    padding:2rem 1.8rem;
+    background:#fff;
+    border-radius:32px;
+    box-shadow:0 20px 40px -12px rgba(15,23,42,.15)
+}
+.page-title{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+    margin-bottom:1.6rem;
+    padding-bottom:.7rem;
+    border-bottom:2px solid #e9edf4;
+    color:#1e293b;
+    font-size:2.2rem;
+    font-weight:600;
+    letter-spacing:-.5px
+}
+.cloud-status{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-left:4px;
+    padding:.3rem .9rem;
+    border-radius:999px;
+    background:#f1f5f9;
+    color:#475569;
+    font-size:.82rem;
+    font-weight:500
+}
+.status-dot{width:9px;height:9px;border-radius:50%;background:#94a3b8}
+.status-dot.online{background:#22c55e}
+.status-dot.offline{background:#ef4444}
+.status-dot.syncing{background:#f59e0b;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:1.8rem;
+    padding-bottom:1rem;
+    border-bottom:1px solid #e9edf4
+}
+.toolbar-group{display:flex;flex-wrap:wrap;gap:9px}
+.btn{
+    padding:.45rem 1.15rem;
+    border:1px solid #d1d9e6;
+    border-radius:999px;
+    background:#fff;
+    color:#334155;
+    font-size:.86rem;
+    font-weight:600;
+    transition:.15s
+}
+.btn:hover{background:#f1f5f9;border-color:#94a3b8}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sync{border-color:#2563eb;background:#2563eb;color:#fff}
+.btn-sync:hover{background:#1d4ed8}
+.last-sync{color:#94a3b8;font-size:.8rem}
+
+.add-section{
+    margin-bottom:2.2rem;
+    padding:1.55rem 1.5rem;
+    border:1px solid #e2e8f0;
+    border-radius:24px;
+    background:#f8fafc
+}
+.add-section h2{margin-bottom:1rem;font-size:1.25rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.2rem}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full-width{grid-column:1/-1}
+.form-group label{
+    color:#475569;
+    font-size:.78rem;
+    font-weight:700;
+    letter-spacing:.04em
+}
+.form-group input,.form-group select{
+    width:100%;
+    min-height:44px;
+    padding:.72rem 1rem;
+    border:1px solid #cbd5e1;
+    border-radius:15px;
+    background:#fff;
+    color:#0f172a;
+    outline:none
+}
+.form-group input:focus,.form-group select:focus{
+    outline:2px solid #93b4ff;
+    outline-offset:1px;
+    border-color:transparent
+}
+
+.remark-combo{position:relative}
+.remark-primary-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 44px;
+    gap:7px
+}
+.remark-primary-row input{
+    width:100%;
+    min-height:44px;
+    padding:.72rem 1rem;
+    border:1px solid #cbd5e1;
+    border-radius:15px;
+    background:#fff;
+    color:#0f172a;
+    outline:none
+}
+.remark-primary-row input:focus{
+    outline:2px solid #93b4ff;
+    outline-offset:1px;
+    border-color:transparent
+}
+.remark-toggle{
+    min-height:44px;
+    border:1px solid #cbd5e1;
+    border-radius:15px;
+    background:#fff;
+    color:#475569;
+    font-weight:700
+}
+.remark-toggle:hover{background:#f1f5f9}
+.remark-panel{
+    position:absolute;
+    left:0;
+    right:0;
+    top:calc(44px + 7px);
+    z-index:900;
+    max-height:285px;
+    overflow-y:auto;
+    padding:.55rem;
+    border:1px solid #cbd5e1;
+    border-radius:15px;
+    background:#fff;
+    box-shadow:0 15px 30px rgba(15,23,42,.14)
+}
+.remark-panel.hidden{display:none!important}
+.remark-option{
+    display:block;
+    width:100%;
+    padding:.55rem .65rem;
+    border:0;
+    border-radius:10px;
+    background:#fff;
+    color:#0f172a;
+    text-align:left
+}
+.remark-option:hover{background:#f1f5f9}
+.remark-empty{
+    padding:.65rem;
+    color:#94a3b8;
+    text-align:center;
+    font-size:.82rem
+}
+.remark-actions{
+    display:flex;
+    gap:7px;
+    margin-top:.45rem;
+    padding-top:.55rem;
+    border-top:1px solid #e2e8f0
+}
+.remark-action{
+    flex:1;
+    padding:.5rem .6rem;
+    border:0;
+    border-radius:10px;
+    background:#f1f5f9;
+    color:#334155;
+    font-size:.82rem;
+    font-weight:650
+}
+.remark-action:hover{background:#e2e8f0}
+.remark-action:disabled{opacity:.42;cursor:not-allowed}
+.selected-remarks{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top:.55rem
+}
+.selected-remark{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:.38rem .65rem;
+    border-radius:999px;
+    background:#eef2f7;
+    color:#0f172a;
+    font-size:.84rem
+}
+.selected-remark-remove{
+    border:0;
+    background:transparent;
+    color:#64748b;
+    font-size:.95rem;
+    line-height:1;
+    padding:0
+}
+.selected-remark-remove:hover{color:#dc2626}
+
+.add-button{
+    grid-column:1/-1;
+    min-height:46px;
+    margin-top:.2rem;
+    border:0;
+    border-radius:999px;
+    background:#1e293b;
+    color:#fff;
+    font-weight:700
+}
+.add-button:hover{background:#0f172a}
+
+.list-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin:1.8rem 0 .8rem
+}
+.list-header h2{font-size:1.4rem}
+.count-badge{
+    min-width:38px;
+    padding:.22rem .8rem;
+    border-radius:999px;
+    background:#e9edf4;
+    text-align:center;
+    font-size:.8rem;
+    font-weight:650
+}
+.table-wrapper{
+    overflow-x:auto;
+    border:1px solid #e9edf4;
+    border-radius:20px
+}
+.region-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:.95rem
+}
+.region-table th{
+    padding:.9rem 1.2rem;
+    border-bottom:2px solid #d1d9e6;
+    background:#f1f5f9;
+    color:#1e293b;
+    text-align:left;
+    font-weight:600
+}
+.region-table td{
+    padding:.85rem 1.2rem;
+    border-bottom:1px solid #eef2f6;
+    vertical-align:top;
+    line-height:1.5
+}
+.region-table tbody tr:last-child td{border-bottom:0}
+.region-table tbody tr:hover{background:#fafcff}
+.region-name{
+    color:#0f172a;
+    font-size:1rem;
+    font-weight:700;
+    overflow-wrap:anywhere
+}
+.region-remarks{
+    margin-top:.32rem;
+    color:#334155;
+    font-weight:400
+}
+.region-remark{
+    display:block;
+    overflow-wrap:anywhere
+}
+.col-action{
+    width:120px;
+    text-align:center;
+    white-space:nowrap
+}
+.action-btn{
+    margin:0 2px;
+    padding:.28rem .72rem;
+    border:0;
+    border-radius:999px;
+    font-size:.82rem;
+    font-weight:650
+}
+.edit-btn{background:#dbeafe;color:#1e3a8a}
+.edit-btn:hover{background:#bfdbfe}
+.delete-btn{background:#fee2e2;color:#991b1b}
+.delete-btn:hover{background:#fecaca}
+.empty-row td{
+    padding:2.6rem 1rem;
+    background:#fafcff;
+    color:#94a3b8;
+    text-align:center
+}
+
+.overlay{
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right))
+            max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+    background:rgba(15,23,42,.45);
+    backdrop-filter:blur(5px)
+}
+.dialog{
+    width:min(94vw,600px);
+    max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    border-radius:26px;
+    background:#fff;
+    box-shadow:0 30px 70px rgba(15,23,42,.28)
+}
+.dialog-scroll{
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-gutter:stable;
+    padding:1.7rem 1.7rem 1rem
+}
+.dialog-scroll::-webkit-scrollbar{width:9px}
+.dialog-scroll::-webkit-scrollbar-track{background:#f1f5f9}
+.dialog-scroll::-webkit-scrollbar-thumb{
+    background:#cbd5e1;
+    border:2px solid #f1f5f9;
+    border-radius:999px
+}
+.dialog h3{margin-bottom:.45rem;font-size:1.3rem}
+.dialog-desc{
+    margin-bottom:1rem;
+    padding-bottom:.8rem;
+    border-bottom:1px solid #e2e8f0;
+    color:#64748b;
+    font-size:.86rem;
+    line-height:1.6
+}
+.dialog .form-group{margin-bottom:1rem}
+.dialog-actions{
+    flex:0 0 auto;
+    display:flex;
+    justify-content:flex-end;
+    gap:9px;
+    padding:.95rem 1.7rem max(.95rem,env(safe-area-inset-bottom));
+    border-top:1px solid #e8edf4;
+    background:#fff;
+    box-shadow:0 -8px 20px rgba(15,23,42,.05)
+}
+.dialog-btn{
+    padding:.55rem 1.5rem;
+    border:0;
+    border-radius:999px;
+    font-weight:650
+}
+.dialog-btn.secondary{background:#f1f5f9;color:#334155}
+.dialog-btn.primary{background:#1e293b;color:#fff}
+.dialog-btn.primary:hover{background:#0f172a}
+
+.history-list{
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    border:1px solid #e2e8f0;
+    border-radius:16px
+}
+.history-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    gap:8px;
+    align-items:center;
+    padding:.65rem .75rem;
+    background:#fff
+}
+.history-row+.history-row{border-top:1px solid #e2e8f0}
+.history-row input{
+    width:100%;
+    min-height:38px;
+    padding:.5rem .7rem;
+    border:1px solid #cbd5e1;
+    border-radius:10px
+}
+.history-btn{
+    padding:.4rem .68rem;
+    border:0;
+    border-radius:999px;
+    font-size:.78rem;
+    font-weight:650
+}
+.history-save{background:#dbeafe;color:#1e3a8a}
+.history-delete{background:#fee2e2;color:#991b1b}
+.history-empty{
+    padding:1.2rem;
+    color:#94a3b8;
+    text-align:center
+}
+
+.token-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    gap:8px
+}
+.token-btn{
+    border:1px solid #d1d9e6;
+    border-radius:12px;
+    background:#f8fafc;
+    color:#334155;
+    padding:.66rem .85rem;
+    font-size:.82rem;
+    font-weight:700;
+    white-space:nowrap
+}
+.token-btn.danger{
+    color:#991b1b;
+    background:#fff7f7;
+    border-color:#fecaca
+}
+.token-btn:disabled{opacity:.45;cursor:not-allowed}
+.hint{
+    margin-top:.4rem;
+    color:#94a3b8;
+    font-size:.76rem;
+    line-height:1.5
+}
+.hint a{color:#2563eb;text-decoration:none}
+
+.toast{
+    position:fixed;
+    left:50%;
+    bottom:28px;
+    z-index:1500;
+    max-width:min(90vw,680px);
+    padding:.78rem 1.5rem;
+    transform:translateX(-50%);
+    border-radius:999px;
+    background:#2563eb;
+    color:#fff;
+    font-size:.88rem;
+    font-weight:600;
+    text-align:center;
+    box-shadow:0 12px 34px rgba(15,23,42,.25)
+}
+.toast.success{background:#16a34a}
+.toast.error{background:#dc2626}
+.toast.info{background:#2563eb}
+
+.back-to-top{
+    position:fixed;
+    right:16px;
+    top:68%;
+    z-index:900;
+    padding:.45rem .72rem;
+    transform:translateY(-50%);
+    border:1px solid rgba(148,163,184,.45);
+    border-radius:999px;
+    background:rgba(255,255,255,.82);
+    color:#64748b;
+    font-size:.76rem;
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transition:.2s
+}
+.back-to-top.visible{opacity:.55;visibility:visible;pointer-events:auto}
+.back-to-top:hover{opacity:1}
+
+@media(max-width:700px){
+    body{padding:.8rem}
+    .container{padding:1.25rem;border-radius:22px}
+    .page-title{font-size:1.8rem}
+    .toolbar{flex-direction:column;align-items:stretch}
+    .toolbar-group{justify-content:center}
+    .last-sync{text-align:center}
+    .form-grid{grid-template-columns:1fr}
+    .form-group.full-width{grid-column:auto}
+    .region-table th,.region-table td{padding:.65rem .8rem;font-size:.88rem}
+    .col-action{width:86px}
+    .dialog{
+        width:100%;
+        max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        border-radius:20px
+    }
+    .dialog-scroll{padding:1.2rem 1.2rem .8rem}
+    .dialog-actions{padding:.85rem 1.2rem max(.85rem,env(safe-area-inset-bottom))}
+    .dialog-actions .dialog-btn{flex:1}
+    .token-row{grid-template-columns:minmax(0,1fr) auto}
+    .token-btn.danger{grid-column:1/-1}
+    .history-row{grid-template-columns:1fr auto}
+    .history-delete{grid-column:2}
+    .back-to-top{right:8px}
+}
+</style>
+</head>
+<body>
+<main class="container">
+    <h1 class="page-title">
+        Region
+        <span class="cloud-status">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">未配置</span>
+        </span>
+    </h1>
+
+    <section class="toolbar">
+        <div class="toolbar-group">
+            <button class="btn btn-sync hidden" id="syncBtn" type="button">同步</button>
+            <button class="btn" id="configBtn" type="button">配置</button>
+            <button class="btn" id="exportBtn" type="button">导出</button>
+            <button class="btn hidden" id="importBtn" type="button">导入</button>
+            <input type="file" id="fileInput" accept=".json,application/json" hidden>
+        </div>
+        <span class="last-sync" id="lastSyncTime">未同步</span>
+    </section>
+
+    <section class="add-section hidden" id="addSection">
+        <h2>添加</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="regionInput">区划</label>
+                <input id="regionInput" type="text" autocomplete="off" autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="remarkInput">备注</label>
+                <div class="remark-combo" id="remarkCombo">
+                    <div class="remark-primary-row">
+                        <input id="remarkInput" type="text" autocomplete="off">
+                        <button class="remark-toggle" id="remarkTrigger" type="button" aria-label="展开备注历史">▾</button>
+                    </div>
+                    <div class="remark-panel hidden" id="remarkPanel">
+                        <div id="remarkOptions"></div>
+                        <div class="remark-actions">
+                            <button class="remark-action" id="remarkAddCurrent" type="button">＋ 添加当前备注</button>
+                            <button class="remark-action" id="remarkManage" type="button">管理备注历史…</button>
+                        </div>
+                    </div>
+                    <div class="selected-remarks" id="remarkSelected"></div>
+                </div>
+            </div>
+
+            <button class="add-button" id="addBtn" type="button">添加</button>
+        </div>
+    </section>
+
+    <section>
+        <div class="list-header">
+            <h2>总表</h2>
+            <span class="count-badge" id="countDisplay">0</span>
+        </div>
+        <div class="table-wrapper">
+            <table class="region-table">
+                <thead>
+                    <tr>
+                        <th>区划</th>
+                        <th class="col-action hidden" id="actionHead">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr class="empty-row"><td colspan="2">暂无条目</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<section class="overlay hidden" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editHeading">
+    <div class="dialog">
+        <div class="dialog-scroll">
+            <h3 id="editHeading">编辑条目</h3>
+            <div class="form-group">
+                <label for="editRegion">区划</label>
+                <input id="editRegion" type="text" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="editRemarkInput">备注</label>
+                <div class="remark-combo" id="editRemarkCombo">
+                    <div class="remark-primary-row">
+                        <input id="editRemarkInput" type="text" autocomplete="off">
+                        <button class="remark-toggle" id="editRemarkTrigger" type="button" aria-label="展开备注历史">▾</button>
+                    </div>
+                    <div class="remark-panel hidden" id="editRemarkPanel">
+                        <div id="editRemarkOptions"></div>
+                        <div class="remark-actions">
+                            <button class="remark-action" id="editRemarkAddCurrent" type="button">＋ 添加当前备注</button>
+                            <button class="remark-action" id="editRemarkManage" type="button">管理备注历史…</button>
+                        </div>
+                    </div>
+                    <div class="selected-remarks" id="editRemarkSelected"></div>
+                </div>
+            </div>
+        </div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" id="editCancel" type="button">取消</button>
+            <button class="dialog-btn primary" id="editSave" type="button">保存</button>
+        </div>
+    </div>
+</section>
+
+<section class="overlay hidden" id="remarkManagerModal" role="dialog" aria-modal="true" aria-labelledby="remarkManagerHeading">
+    <div class="dialog">
+        <div class="dialog-scroll">
+            <h3 id="remarkManagerHeading">管理备注历史</h3>
+            <p class="dialog-desc">历史列表按数字从小到大排序。重命名历史备注时，已有条目中的同名备注也会同步更新。</p>
+            <div class="history-list" id="remarkHistoryList"></div>
+        </div>
+        <div class="dialog-actions">
+            <button class="dialog-btn primary" id="remarkManagerClose" type="button">完成</button>
+        </div>
+    </div>
+</section>
+
+<section class="overlay hidden" id="configModal" role="dialog" aria-modal="true" aria-labelledby="configHeading">
+    <form class="dialog" id="configForm" autocomplete="on">
+        <div class="dialog-scroll">
+            <h3 id="configHeading">GitHub 云端配置</h3>
+            <p class="dialog-desc">所有访客均可直接读取同目录下的 region_data.json，无需 Token。只有添加、编辑、删除、导入和同步时需要管理 Token；保存配置前会先验证 Token 和目标仓库。</p>
+
+            <div class="form-group">
+                <label for="cfgSavedToken">已保存 Token</label>
+                <div class="token-row">
+                    <select id="cfgSavedToken"><option value="">新增 Token</option></select>
+                    <button class="token-btn" id="cfgNewTokenBtn" type="button">新增</button>
+                    <button class="token-btn danger" id="cfgDeleteTokenBtn" type="button" disabled>删除</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="cfgTokenName">Token 名称</label>
+                <input id="cfgTokenName" type="text" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="cfgToken">GitHub Personal Access Token *</label>
+                <input id="cfgToken" name="github-token-new" type="password" autocomplete="new-password" spellcheck="false">
+                <div class="hint">建议使用仅授权目标仓库，并具有 Contents: Read and write 权限的细粒度 Token。</div>
+            </div>
+
+            <div class="form-group">
+                <label for="cfgOwner">仓库所有者 *</label>
+                <input id="cfgOwner" name="github-owner" type="text" autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="cfgRepo">仓库名称 *</label>
+                <input id="cfgRepo" type="text">
+            </div>
+
+            <div class="form-group">
+                <label for="cfgFile">数据文件名</label>
+                <input id="cfgFile" type="text" value="region_data.json">
+            </div>
+        </div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" id="configCancel" type="button">取消</button>
+            <button class="dialog-btn primary" id="configSave" type="submit">保存并连接</button>
+        </div>
+    </form>
+</section>
+
+<button class="back-to-top" id="backToTopBtn" type="button">↑ 回到顶部</button>
+<div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(()=>{
+'use strict';
+
+// ---------- 页面实例与本地键 ----------
+function pageIdentity(){
+    let p=(location.pathname||'/').replace(/\\/g,'/').replace(/\/+/g,'/').replace(/\/(?:index\.html?)$/i,'/');
+    if(p.length>1&&p.endsWith('/'))p=p.slice(0,-1);
+    return `${location.origin}${p}`;
+}
+function hashIdentity(value){
+    let hash=0x811c9dc5;
+    for(let i=0;i<value.length;i++){
+        hash^=value.charCodeAt(i);
+        hash=Math.imul(hash,0x01000193);
+    }
+    return (hash>>>0).toString(16).padStart(8,'0');
+}
+
+const NS=`region_app:${hashIdentity(pageIdentity())}`;
+const STATE_KEY=`${NS}:state_v1`;
+const CONFIG_KEY=`${NS}:config_v1`;
+const TOKEN_KEY=`${NS}:token_profiles_v1`;
+const META_KEY=`${NS}:sync_meta_v1`;
+const BACKUP_KEY=`${NS}:backups_v1`;
+const PUBLIC_FILE='region_data.json';
+const MAX_SYNC=750*1024;
+const AUTO_DELAY=700;
+const API_VERSION='2026-03-10';
+
+const $=id=>document.getElementById(id);
+const statusDot=$('statusDot'),statusText=$('statusText'),syncBtn=$('syncBtn'),configBtn=$('configBtn'),
+exportBtn=$('exportBtn'),importBtn=$('importBtn'),fileInput=$('fileInput'),lastSyncTime=$('lastSyncTime'),
+addSection=$('addSection'),actionHead=$('actionHead'),
+regionInput=$('regionInput'),remarkCombo=$('remarkCombo'),remarkInput=$('remarkInput'),remarkTrigger=$('remarkTrigger'),
+remarkPanel=$('remarkPanel'),remarkOptions=$('remarkOptions'),remarkAddCurrent=$('remarkAddCurrent'),
+remarkManage=$('remarkManage'),remarkSelected=$('remarkSelected'),addBtn=$('addBtn'),tableBody=$('tableBody'),
+countDisplay=$('countDisplay'),editModal=$('editModal'),editRegion=$('editRegion'),editRemarkCombo=$('editRemarkCombo'),
+editRemarkInput=$('editRemarkInput'),editRemarkTrigger=$('editRemarkTrigger'),editRemarkPanel=$('editRemarkPanel'),
+editRemarkOptions=$('editRemarkOptions'),editRemarkAddCurrent=$('editRemarkAddCurrent'),
+editRemarkManage=$('editRemarkManage'),editRemarkSelected=$('editRemarkSelected'),editCancel=$('editCancel'),
+editSave=$('editSave'),remarkManagerModal=$('remarkManagerModal'),remarkHistoryList=$('remarkHistoryList'),
+remarkManagerClose=$('remarkManagerClose'),configModal=$('configModal'),configForm=$('configForm'),
+cfgSavedToken=$('cfgSavedToken'),cfgNewTokenBtn=$('cfgNewTokenBtn'),cfgDeleteTokenBtn=$('cfgDeleteTokenBtn'),
+cfgTokenName=$('cfgTokenName'),cfgToken=$('cfgToken'),cfgOwner=$('cfgOwner'),cfgRepo=$('cfgRepo'),
+cfgFile=$('cfgFile'),configCancel=$('configCancel'),configSave=$('configSave'),
+backToTopBtn=$('backToTopBtn'),toast=$('toast');
+
+let state={entries:[],remarks:[]};
+let addSelected=[];
+let editSelected=[];
+let editingId='';
+let profiles=[];
+let selectedProfileId='';
+let config={token:'',tokenName:'',activeTokenId:'',owner:'',repo:'',file:'region_data.json'};
+let meta=emptyMeta();
+let syncing=false;
+let syncQueued=false;
+let autoTimer=null;
+let toastTimer=null;
+let hasStored=false;
+
+// ---------- 通用工具 ----------
+function clean(v){return String(v??'').normalize('NFKC').trim()}
+function esc(v){const d=document.createElement('div');d.textContent=String(v??'');return d.innerHTML}
+function attr(v){return esc(v).replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function uid(){return crypto?.randomUUID?crypto.randomUUID():`region_${Date.now()}_${Math.random().toString(36).slice(2,9)}`}
+function key(v){return clean(v).toLocaleLowerCase('zh-CN')}
+function normalizeToken(value){
+    return String(value??'')
+        .replace(/^\s*(?:Bearer|token)\s+/i,'')
+        .replace(/[\u200B-\u200D\u2060\uFEFF]/g,'')
+        .replace(/[\s"'`]+/g,'')
+        .trim()
+}
+
+const numericCollator=new Intl.Collator('zh-CN',{numeric:true,sensitivity:'base'});
+const regionCollator=new Intl.Collator('zh-CN-u-co-pinyin',{numeric:true,sensitivity:'base'});
+
+function uniq(values){
+    const map=new Map();
+    for(const raw of values||[]){
+        const value=clean(raw);
+        if(value&&!map.has(key(value)))map.set(key(value),value);
+    }
+    return [...map.values()];
+}
+function sortRemarks(values){
+    return uniq(values).sort((a,b)=>numericCollator.compare(clean(a),clean(b)));
+}
+function normalizeEntry(item){
+    if(!item||typeof item!=='object')return null;
+    const region=clean(item.region);
+    if(!region)return null;
+    return{
+        id:clean(item.id)||uid(),
+        region,
+        remarks:sortRemarks(Array.isArray(item.remarks)?item.remarks:[])
+    };
+}
+function normalizeState(value){
+    const source=Array.isArray(value)?{entries:value}:(value&&typeof value==='object'?value:{});
+    const entries=(Array.isArray(source.entries)?source.entries:[])
+        .map(normalizeEntry)
+        .filter(Boolean)
+        .sort((a,b)=>{
+            const byRegion=regionCollator.compare(a.region,b.region);
+            if(byRegion!==0)return byRegion;
+            return String(a.id).localeCompare(String(b.id));
+        });
+
+    const history=Array.isArray(source.remarks)
+        ? sortRemarks(source.remarks)
+        : sortRemarks(entries.flatMap(item=>item.remarks));
+
+    return{schemaVersion:1,entries,remarks:history};
+}
+function fingerprint(value=state){
+    const normalized=normalizeState(value);
+    return JSON.stringify({
+        schemaVersion:1,
+        entries:normalized.entries.map(x=>({id:x.id,region:x.region,remarks:x.remarks})),
+        remarks:normalized.remarks
+    });
+}
+function serialize(value=state){return JSON.stringify(normalizeState(value),null,2)}
+function assertSize(value=state){
+    const bytes=new TextEncoder().encode(serialize(value)).length;
+    if(bytes>MAX_SYNC)throw new Error(`数据约 ${Math.ceil(bytes/1024)} KB，超过 750 KB 的安全同步上限`);
+}
+function pathEncode(path){return String(path).split('/').filter(Boolean).map(encodeURIComponent).join('/')}
+function toB64(text){
+    const bytes=new TextEncoder().encode(text);
+    let binary='';
+    for(let i=0;i<bytes.length;i+=0x8000){
+        binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
+    }
+    return btoa(binary);
+}
+function fromB64(value){
+    const binary=atob(String(value||'').replace(/\s/g,''));
+    const bytes=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+    return new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+}
+function lg(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function ls(k,v){try{localStorage.setItem(k,v);return true}catch(e){showToast(`本地保存失败：${e.message}`,'error');return false}}
+function lr(k){try{localStorage.removeItem(k)}catch(e){}}
+function showToast(message,type='info'){
+    toast.textContent=message;
+    toast.className=`toast ${type}`;
+    toast.classList.remove('hidden');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>toast.classList.add('hidden'),3000);
+}
+function setStatus(kind,text){
+    statusDot.className=`status-dot ${kind}`;
+    statusText.textContent=text;
+}
+function pageBasePath(){
+    return location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]*$/,'');
+}
+function publicDataUrl(){
+    return `${location.origin}${pageBasePath()}${PUBLIC_FILE}?v=${Date.now()}`;
+}
+function admin(){return validConfig()}
+function updateAdminUI(){
+    const on=admin();
+    addSection.classList.toggle('hidden',!on);
+    syncBtn.classList.toggle('hidden',!on);
+    importBtn.classList.toggle('hidden',!on);
+    actionHead.classList.toggle('hidden',!on);
+}
+
+// ---------- 本地数据 ----------
+function saveLocal(){
+    state=normalizeState(state);
+    ls(STATE_KEY,JSON.stringify(state));
+}
+function loadLocal(){
+    const stored=lg(STATE_KEY);
+    hasStored=stored!==null;
+    if(!stored){
+        state={entries:[],remarks:[]};
+    }else{
+        try{state=normalizeState(JSON.parse(stored))}
+        catch(e){state={entries:[],remarks:[]}}
+    }
+    render();
+}
+function addRemarkHistory(value){
+    const v=clean(value);
+    if(!v)return;
+    state.remarks=sortRemarks([...state.remarks,v]);
+}
+
+// ---------- 备注下拉 ----------
+function getRemarkContext(which){
+    const isAdd=which==='add';
+    return{
+        input:isAdd?remarkInput:editRemarkInput,
+        panel:isAdd?remarkPanel:editRemarkPanel,
+        options:isAdd?remarkOptions:editRemarkOptions,
+        selectedEl:isAdd?remarkSelected:editRemarkSelected,
+        selected:isAdd?addSelected:editSelected,
+        addCurrent:isAdd?remarkAddCurrent:editRemarkAddCurrent
+    };
+}
+function setRemarkPanelOpen(which,open){
+    const ctx=getRemarkContext(which);
+    ctx.panel.classList.toggle('hidden',!open);
+}
+function closeRemarkPanels(){
+    setRemarkPanelOpen('add',false);
+    setRemarkPanelOpen('edit',false);
+}
+function renderRemarkCombo(which){
+    const ctx=getRemarkContext(which);
+    const selected=sortRemarks(ctx.selected);
+    if(which==='add')addSelected=selected;
+    else editSelected=selected;
+
+    const selectedKeys=new Set(selected.map(key));
+    const history=sortRemarks(state.remarks).filter(v=>!selectedKeys.has(key(v)));
+
+    ctx.options.innerHTML=history.length
+        ? history.map(v=>`<button class="remark-option" type="button" data-value="${attr(v)}">${esc(v)}</button>`).join('')
+        : '<div class="remark-empty">暂无其它备注</div>';
+
+    ctx.selectedEl.innerHTML=selected.map(v=>`
+        <span class="selected-remark">
+            ${esc(v)}
+            <button class="selected-remark-remove" type="button" data-value="${attr(v)}" aria-label="删除备注">×</button>
+        </span>
+    `).join('');
+
+    ctx.addCurrent.disabled=!clean(ctx.input.value);
+}
+function addCurrentRemark(which){
+    const ctx=getRemarkContext(which);
+    const value=clean(ctx.input.value);
+    if(!value){
+        showToast('请输入备注','error');
+        ctx.input.focus();
+        return;
+    }
+    const selected=which==='add'?addSelected:editSelected;
+    if(!selected.some(v=>key(v)===key(value)))selected.push(value);
+    addRemarkHistory(value);
+    ctx.input.value='';
+    if(which==='add')addSelected=sortRemarks(selected);
+    else editSelected=sortRemarks(selected);
+    renderRemarkCombo('add');
+    renderRemarkCombo('edit');
+    saveLocal();
+    setRemarkPanelOpen(which,false);
+    ctx.input.focus();
+}
+function addHistoryRemarkToSelection(which,value){
+    const selected=which==='add'?addSelected:editSelected;
+    const v=clean(value);
+    if(v&&!selected.some(x=>key(x)===key(v)))selected.push(v);
+    if(which==='add')addSelected=sortRemarks(selected);
+    else editSelected=sortRemarks(selected);
+    renderRemarkCombo(which);
+    setRemarkPanelOpen(which,false);
+}
+function removeSelectedRemark(which,value){
+    if(which==='add')addSelected=addSelected.filter(x=>key(x)!==key(value));
+    else editSelected=editSelected.filter(x=>key(x)!==key(value));
+    renderRemarkCombo(which);
+}
+function openRemarkManager(){
+    closeRemarkPanels();
+    renderRemarkManager();
+    remarkManagerModal.classList.remove('hidden');
+}
+function renderRemarkManager(){
+    state.remarks=sortRemarks(state.remarks);
+    remarkHistoryList.innerHTML=state.remarks.length
+        ? state.remarks.map(v=>`
+            <div class="history-row" data-old="${attr(v)}">
+                <input type="text" value="${attr(v)}">
+                <button class="history-btn history-save" type="button">保存</button>
+                <button class="history-btn history-delete" type="button">删除</button>
+            </div>
+        `).join('')
+        : '<div class="history-empty">暂无已保存的备注</div>';
+}
+function renameRemarkHistory(oldValue,newValue){
+    const old=clean(oldValue),neu=clean(newValue);
+    if(!neu){
+        showToast('备注不能为空','error');
+        return false;
+    }
+    if(state.remarks.some(v=>key(v)===key(neu)&&key(v)!==key(old))){
+        showToast('该备注已存在','error');
+        return false;
+    }
+
+    state.remarks=sortRemarks(state.remarks.map(v=>key(v)===key(old)?neu:v));
+    for(const entry of state.entries){
+        entry.remarks=sortRemarks(entry.remarks.map(v=>key(v)===key(old)?neu:v));
+    }
+    addSelected=sortRemarks(addSelected.map(v=>key(v)===key(old)?neu:v));
+    editSelected=sortRemarks(editSelected.map(v=>key(v)===key(old)?neu:v));
+
+    saveLocal();
+    render();
+    renderRemarkManager();
+    markChange();
+    showToast('已更新备注','success');
+    return true;
+}
+function deleteRemarkHistory(value){
+    const v=clean(value);
+    if(!confirm(`确定从备注下拉历史中删除“${v}”吗？\n\n已有条目中的备注不会改变。`))return;
+    state.remarks=state.remarks.filter(x=>key(x)!==key(v));
+    saveLocal();
+    renderRemarkManager();
+    renderRemarkCombo('add');
+    renderRemarkCombo('edit');
+    markChange();
+    showToast('已删除备注历史','success');
+}
+
+// ---------- 总表 ----------
+function render(){
+    state=normalizeState(state);
+    countDisplay.textContent=String(state.entries.length);
+
+    const canManage=admin();
+    tableBody.innerHTML=state.entries.length
+        ? state.entries.map(item=>{
+            const remarks=item.remarks.length
+                ? `<div class="region-remarks">${item.remarks.map(v=>`<span class="region-remark">${esc(v)}</span>`).join('')}</div>`
+                : '';
+            const actions=canManage
+                ? `<td class="col-action"><button class="action-btn edit-btn" data-id="${attr(item.id)}" type="button">编辑</button><button class="action-btn delete-btn" data-id="${attr(item.id)}" type="button">删除</button></td>`
+                : '';
+            return `<tr><td><div class="region-name">${esc(item.region)}</div>${remarks}</td>${actions}</tr>`;
+        }).join('')
+        : `<tr class="empty-row"><td colspan="${canManage?2:1}">暂无条目</td></tr>`;
+
+    updateAdminUI();
+    renderRemarkCombo('add');
+    renderRemarkCombo('edit');
+    saveLocal();
+}
+function addEntry(){
+    if(!admin()){showToast('请先配置并验证 Token','error');return}
+    const region=clean(regionInput.value);
+    if(!region){
+        showToast('请输入区划','error');
+        regionInput.focus();
+        return;
+    }
+
+    const pending=clean(remarkInput.value);
+    if(pending){
+        if(!addSelected.some(v=>key(v)===key(pending)))addSelected.push(pending);
+        addRemarkHistory(pending);
+    }
+
+    const remarks=sortRemarks(addSelected);
+    for(const remark of remarks)addRemarkHistory(remark);
+
+    state.entries.push({
+        id:uid(),
+        region,
+        remarks
+    });
+
+    regionInput.value='';
+    remarkInput.value='';
+    addSelected=[];
+    closeRemarkPanels();
+    render();
+    markChange();
+    regionInput.focus();
+    showToast('已添加','success');
+}
+function openEdit(id){
+    if(!admin()){showToast('请先配置并验证 Token','error');return}
+    const item=state.entries.find(x=>x.id===id);
+    if(!item)return;
+    closeRemarkPanels();
+    editingId=id;
+    editRegion.value=item.region;
+    editRemarkInput.value='';
+    editSelected=sortRemarks(item.remarks);
+    renderRemarkCombo('edit');
+    editModal.classList.remove('hidden');
+    setTimeout(()=>editRegion.focus(),30);
+}
+function saveEdit(){
+    if(!admin()){showToast('请先配置并验证 Token','error');return}
+    const item=state.entries.find(x=>x.id===editingId);
+    if(!item)return;
+
+    const region=clean(editRegion.value);
+    if(!region){
+        showToast('请输入区划','error');
+        editRegion.focus();
+        return;
+    }
+
+    const pending=clean(editRemarkInput.value);
+    if(pending){
+        if(!editSelected.some(v=>key(v)===key(pending)))editSelected.push(pending);
+        addRemarkHistory(pending);
+    }
+
+    const remarks=sortRemarks(editSelected);
+    for(const remark of remarks)addRemarkHistory(remark);
+
+    item.region=region;
+    item.remarks=remarks;
+
+    editingId='';
+    editSelected=[];
+    editRemarkInput.value='';
+    closeRemarkPanels();
+    editModal.classList.add('hidden');
+    render();
+    markChange();
+    showToast('已保存','success');
+}
+function deleteEntry(id){
+    if(!admin()){showToast('请先配置并验证 Token','error');return}
+    const item=state.entries.find(x=>x.id===id);
+    if(!item)return;
+    if(!confirm(`确定删除“${item.region}”吗？`))return;
+    state.entries=state.entries.filter(x=>x.id!==id);
+    render();
+    markChange();
+    showToast('已删除','success');
+}
+
+// ---------- Token 配置 ----------
+function tokenId(){return crypto?.randomUUID?crypto.randomUUID():`token_${Date.now()}_${Math.random().toString(36).slice(2,9)}`}
+function normalizeProfile(item){
+    if(!item||typeof item!=='object')return null;
+    const token=normalizeToken(item.token);
+    if(!token)return null;
+    return{
+        id:clean(item.id)||tokenId(),
+        name:clean(item.name),
+        token,
+        owner:clean(item.owner),
+        repo:clean(item.repo),
+        file:clean(item.file)||'region_data.json',
+        updatedAt:clean(item.updatedAt)||new Date().toISOString()
+    };
+}
+function loadProfiles(){
+    const stored=lg(TOKEN_KEY);
+    if(!stored)return[];
+    try{
+        const parsed=JSON.parse(stored);
+        return Array.isArray(parsed)?parsed.map(normalizeProfile).filter(Boolean):[];
+    }catch(e){return[]}
+}
+function saveProfiles(){ls(TOKEN_KEY,JSON.stringify(profiles))}
+function profileLabel(profile,index){
+    const suffix=profile.token.length>4?profile.token.slice(-4):profile.token;
+    const target=[profile.owner,profile.repo].filter(Boolean).join('/');
+    return profile.name||target||`Token ${index+1} ····${suffix}`;
+}
+function renderProfiles(preferred=selectedProfileId){
+    cfgSavedToken.innerHTML='<option value="">新增 Token</option>';
+    profiles.forEach((profile,index)=>{
+        const option=document.createElement('option');
+        option.value=profile.id;
+        option.textContent=profileLabel(profile,index);
+        cfgSavedToken.appendChild(option);
+    });
+    selectedProfileId=profiles.some(x=>x.id===preferred)?preferred:'';
+    cfgSavedToken.value=selectedProfileId;
+    cfgDeleteTokenBtn.disabled=!selectedProfileId;
+}
+function useProfile(id){
+    selectedProfileId=id||'';
+    const profile=profiles.find(x=>x.id===selectedProfileId);
+    if(!profile)return;
+    cfgTokenName.value=profile.name;
+    cfgToken.value=profile.token;
+    cfgOwner.value=profile.owner;
+    cfgRepo.value=profile.repo;
+    cfgFile.value=profile.file;
+    cfgDeleteTokenBtn.disabled=false;
+}
+function newProfile(){
+    selectedProfileId='';
+    cfgSavedToken.value='';
+    cfgTokenName.value='';
+    cfgToken.value='';
+    cfgOwner.value='';
+    cfgRepo.value='';
+    cfgFile.value='region_data.json';
+    cfgDeleteTokenBtn.disabled=true;
+}
+function deleteProfile(){
+    const profile=profiles.find(x=>x.id===selectedProfileId);
+    if(!profile)return;
+    if(!confirm(`确定从当前浏览器删除“${profileLabel(profile,0)}”吗？`))return;
+
+    profiles=profiles.filter(x=>x.id!==profile.id);
+    saveProfiles();
+
+    if(config.activeTokenId===profile.id){
+        config={token:'',tokenName:'',activeTokenId:'',owner:'',repo:'',file:'region_data.json'};
+        saveConfigBase();
+    }
+
+    renderProfiles('');
+    newProfile();
+    updateSyncTime();
+    setStatus(validConfig()?'online':'offline',validConfig()?'已配置':'未配置');
+}
+function upsertProfile(){
+    const token=normalizeToken(cfgToken.value);
+    const name=clean(cfgTokenName.value);
+    const owner=clean(cfgOwner.value);
+    const repo=clean(cfgRepo.value);
+    const file=clean(cfgFile.value)||'region_data.json';
+
+    let profile=profiles.find(x=>x.id===selectedProfileId)||profiles.find(x=>x.token===token);
+    if(profile){
+        Object.assign(profile,{name,token,owner,repo,file,updatedAt:new Date().toISOString()});
+    }else{
+        profile={id:tokenId(),name,token,owner,repo,file,updatedAt:new Date().toISOString()};
+        profiles.push(profile);
+    }
+
+    selectedProfileId=profile.id;
+    saveProfiles();
+    renderProfiles(profile.id);
+    return profile.id;
+}
+function saveConfigBase(){
+    ls(CONFIG_KEY,JSON.stringify({
+        activeTokenId:config.activeTokenId,
+        owner:config.owner,
+        repo:config.repo,
+        file:config.file
+    }));
+}
+function loadConfig(){
+    profiles=loadProfiles();
+    let saved={};
+    try{saved=JSON.parse(lg(CONFIG_KEY)||'{}')||{}}catch(e){}
+
+    const activeId=typeof saved.activeTokenId==='string'?saved.activeTokenId:'';
+    const profile=profiles.find(x=>x.id===activeId)||null;
+
+    config={
+        token:profile?normalizeToken(profile.token):'',
+        tokenName:profile?.name||'',
+        activeTokenId:profile?.id||'',
+        owner:profile?.owner||(typeof saved.owner==='string'?saved.owner:''),
+        repo:profile?.repo||(typeof saved.repo==='string'?saved.repo:''),
+        file:profile?.file||(typeof saved.file==='string'&&saved.file.trim()?saved.file.trim():'region_data.json')
+    };
+
+    selectedProfileId=config.activeTokenId;
+    renderProfiles(selectedProfileId);
+}
+function validConfig(){return Boolean(config.token&&config.owner&&config.repo&&config.file)}
+function target(){return validConfig()?`${config.owner}/${config.repo}/${config.file}`:''}
+function openConfig(){
+    renderProfiles(config.activeTokenId||selectedProfileId);
+    const profile=profiles.find(x=>x.id===config.activeTokenId)||null;
+    cfgTokenName.value=config.tokenName||profile?.name||'';
+    cfgToken.value=config.token||profile?.token||'';
+    cfgOwner.value=config.owner||profile?.owner||'';
+    cfgRepo.value=config.repo||profile?.repo||'';
+    cfgFile.value=config.file||profile?.file||'region_data.json';
+    configModal.classList.remove('hidden');
+}
+function closeConfig(){configModal.classList.add('hidden')}
+
+// ---------- GitHub ----------
+function apiErrorMessage(error){
+    if(!error)return'未知错误';
+    if(error.status===401)return'Token 无效、已过期或已撤销';
+    if(error.status===403)return'Token 权限不足或仓库访问被拒绝';
+    if(error.status===404)return'仓库、文件或路径不存在，或 Token 无权访问';
+    if(error.status===409)return'云端文件已被其他设备修改';
+    return error.message||String(error);
+}
+async function githubRequest(url,method='GET',body=null,tokenValue=config.token){
+    const token=normalizeToken(tokenValue);
+    if(!token){
+        const error=new Error('Token 为空');
+        error.status=401;
+        throw error;
+    }
+
+    const headers={
+        Authorization:`Bearer ${token}`,
+        Accept:'application/vnd.github+json',
+        'X-GitHub-Api-Version':API_VERSION
+    };
+    const options={method,headers,cache:'no-store'};
+
+    if(body!==null){
+        headers['Content-Type']='application/json';
+        options.body=JSON.stringify(body);
+    }
+
+    const response=await fetch(url,options);
+    const raw=await response.text();
+    let payload=null;
+    if(raw){
+        try{payload=JSON.parse(raw)}
+        catch(e){payload={message:raw}}
+    }
+
+    if(!response.ok){
+        const error=new Error(payload?.message||`HTTP ${response.status}`);
+        error.status=response.status;
+        error.payload=payload;
+        throw error;
+    }
+    return payload;
+}
+async function api(method,endpoint,body=null){
+    const url=`https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/${endpoint}`;
+    return githubRequest(url,method,body,config.token);
+}
+async function verifyTokenAndRepo(token,owner,repo){
+    const normalized=normalizeToken(token);
+    const user=await githubRequest('https://api.github.com/user','GET',null,normalized);
+    await githubRequest(
+        `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
+        'GET',
+        null,
+        normalized
+    );
+    return{token:normalized,user};
+}
+function endpoint(){
+    const path=pathEncode(config.file);
+    if(!path)throw new Error('数据文件名不能为空');
+    return`contents/${path}`;
+}
+async function readRemote(){
+    try{
+        const data=await api('GET',endpoint());
+        if(!data||data.type!=='file'||data.encoding!=='base64'||typeof data.content!=='string'||!data.sha){
+            throw new Error('云端文件无法安全读取');
+        }
+        if(Number.isFinite(data.size)&&data.size>MAX_SYNC)throw new Error('云端数据超过 750 KB');
+        const parsed=JSON.parse(fromB64(data.content));
+        const normalized=normalizeState(parsed);
+        assertSize(normalized);
+        return{exists:true,sha:data.sha,state:normalized};
+    }catch(error){
+        if(error.status===404)return{exists:false,sha:null,state:{entries:[],remarks:[]}};
+        throw error;
+    }
+}
+async function writeRemote(snapshot,sha){
+    const normalized=normalizeState(snapshot);
+    assertSize(normalized);
+    const body={
+        message:`更新 Region 数据 - ${new Date().toLocaleString()}`,
+        content:toB64(JSON.stringify(normalized,null,2))
+    };
+    if(sha)body.sha=sha;
+    const result=await api('PUT',endpoint(),body);
+    return result?.content?.sha||null;
+}
+
+// ---------- 同步元数据 ----------
+function emptyMeta(t=''){
+    return{
+        schemaVersion:1,
+        target:t,
+        remoteSha:null,
+        lastSyncedFingerprint:null,
+        lastSyncAt:null
+    };
+}
+function loadMeta(){
+    const stored=lg(META_KEY);
+    if(!stored){meta=emptyMeta();return}
+    try{
+        const parsed=JSON.parse(stored);
+        meta=parsed&&parsed.schemaVersion===1
+            ? {
+                schemaVersion:1,
+                target:typeof parsed.target==='string'?parsed.target:'',
+                remoteSha:typeof parsed.remoteSha==='string'?parsed.remoteSha:null,
+                lastSyncedFingerprint:typeof parsed.lastSyncedFingerprint==='string'?parsed.lastSyncedFingerprint:null,
+                lastSyncAt:typeof parsed.lastSyncAt==='string'?parsed.lastSyncAt:null
+            }
+            : emptyMeta();
+    }catch(e){meta=emptyMeta()}
+}
+function saveMeta(){
+    ls(META_KEY,JSON.stringify(meta));
+    updateSyncTime();
+}
+function ensureTarget(){
+    const t=target();
+    if(meta.target!==t){
+        meta=emptyMeta(t);
+        saveMeta();
+    }
+}
+function record(snapshot,sha){
+    meta={
+        schemaVersion:1,
+        target:target(),
+        remoteSha:sha||null,
+        lastSyncedFingerprint:fingerprint(snapshot),
+        lastSyncAt:new Date().toISOString()
+    };
+    saveMeta();
+}
+function updateSyncTime(){
+    if(!meta.lastSyncAt||meta.target!==target()){
+        lastSyncTime.textContent='未同步';
+        return;
+    }
+    const date=new Date(meta.lastSyncAt);
+    lastSyncTime.textContent=Number.isNaN(date.getTime())
+        ? '已同步'
+        : `已同步 ${date.toLocaleString()}`;
+}
+
+// ---------- 冲突备份 ----------
+function backups(){
+    const stored=lg(BACKUP_KEY);
+    if(!stored)return[];
+    try{
+        const parsed=JSON.parse(stored);
+        return Array.isArray(parsed)?parsed.filter(x=>x&&x.state).slice(-10):[];
+    }catch(e){return[]}
+}
+function backup(snapshot,source){
+    const list=backups();
+    list.push({
+        createdAt:new Date().toISOString(),
+        source,
+        target:target(),
+        state:normalizeState(snapshot)
+    });
+    ls(BACKUP_KEY,JSON.stringify(list.slice(-10)));
+}
+
+// ---------- 同步 ----------
+async function adoptRemote(expectedFingerprint,showResult){
+    if(fingerprint(state)!==expectedFingerprint){
+        syncQueued=true;
+        return{ok:false,conflict:false};
+    }
+
+    const latest=await readRemote();
+    if(!latest.exists){
+        setStatus('offline','存在冲突');
+        showToast('云端文件已删除，未覆盖本地数据','error');
+        return{ok:false,conflict:true};
+    }
+
+    if(fingerprint(state)!==expectedFingerprint){
+        syncQueued=true;
+        return{ok:false,conflict:false};
+    }
+
+    backup(state,'before_remote_replace');
+    state=latest.state;
+    render();
+    record(state,latest.sha);
+    setStatus('online','已连接');
+    if(showResult)showToast(`已从 GitHub 更新 ${state.entries.length} 个条目`,'success');
+    return{ok:true,conflict:false};
+}
+async function performSync(showResult,interactive){
+    ensureTarget();
+
+    const local=normalizeState(state);
+    assertSize(local);
+    const localFp=fingerprint(local);
+    const baseline=meta.lastSyncedFingerprint;
+    const hasBaseline=typeof baseline==='string';
+    const remote=await readRemote();
+
+    if(!remote.exists&&hasBaseline){
+        setStatus('offline','云端文件已删除');
+
+        if(!interactive){
+            showToast('云端数据文件已删除；请点击“同步”处理','error');
+            return{ok:false,conflict:true};
+        }
+
+        if(!confirm('检测到云端 Region 数据文件已删除。\n\n确定：用当前本地数据重新创建云端文件。\n取消：保留本地数据。')){
+            return{ok:false,conflict:true};
+        }
+
+        const latest=await readRemote();
+        if(latest.exists){
+            const error=new Error('确认期间云端文件已重新出现');
+            error.status=409;
+            throw error;
+        }
+
+        const sha=await writeRemote(local,null);
+        record(local,sha);
+        setStatus('online','已连接');
+        showToast(`已重新创建云端文件并同步 ${local.entries.length} 个条目`,'success');
+        return{ok:true,conflict:false,uploadedFingerprint:localFp};
+    }
+
+    if(!remote.exists){
+        const sha=await writeRemote(local,null);
+        record(local,sha);
+        setStatus('online','已连接');
+        if(showResult)showToast(`已创建云端文件并同步 ${local.entries.length} 个条目`,'success');
+        return{ok:true,conflict:false,uploadedFingerprint:localFp};
+    }
+
+    const remoteFp=fingerprint(remote.state);
+
+    if(localFp===remoteFp){
+        record(local,remote.sha);
+        setStatus('online','已连接');
+        if(showResult)showToast('本地与云端已一致','success');
+        return{ok:true,conflict:false};
+    }
+
+    const localChanged=!hasBaseline||localFp!==baseline;
+    const remoteChanged=!hasBaseline||remoteFp!==baseline;
+
+    if(hasBaseline&&localChanged&&!remoteChanged){
+        const sha=await writeRemote(local,remote.sha);
+        record(local,sha);
+        setStatus('online','已连接');
+        if(showResult)showToast(`成功同步 ${local.entries.length} 个条目到 GitHub`,'success');
+        return{ok:true,conflict:false,uploadedFingerprint:localFp};
+    }
+
+    if(hasBaseline&&!localChanged&&remoteChanged){
+        return adoptRemote(localFp,showResult);
+    }
+
+    if(!hasBaseline&&!hasStored){
+        return adoptRemote(localFp,showResult);
+    }
+
+    setStatus('offline','存在冲突');
+
+    if(!interactive){
+        showToast('本地和云端都发生了修改；请点击“同步”选择版本','error');
+        return{ok:false,conflict:true};
+    }
+
+    if(confirm('检测到同步冲突。\n\n确定：用本地数据覆盖云端。\n取消：继续选择是否采用云端数据。')){
+        backup(remote.state,'remote_before_local_override');
+        const sha=await writeRemote(local,remote.sha);
+        record(local,sha);
+        setStatus('online','已连接');
+        showToast('已用本地数据覆盖云端','success');
+        return{ok:true,conflict:false,uploadedFingerprint:localFp};
+    }
+
+    if(confirm('是否用最新云端数据覆盖本地？\n\n本地当前内容会保存为冲突备份。')){
+        return adoptRemote(fingerprint(state),true);
+    }
+
+    showToast('已取消同步','info');
+    return{ok:false,conflict:true};
+}
+async function sync(showResult=true,interactive=showResult){
+    if(!validConfig()){
+        showToast('请先配置 GitHub 连接','error');
+        return false;
+    }
+    if(syncing){
+        syncQueued=true;
+        return false;
+    }
+
+    clearTimeout(autoTimer);
+    autoTimer=null;
+    syncing=true;
+    syncBtn.disabled=true;
+    setStatus('syncing','同步中…');
+
+    let result={ok:false,conflict:false};
+
+    try{
+        result=await performSync(showResult,interactive);
+    }catch(error){
+        console.error(error);
+        setStatus('offline',error.status===409?'存在冲突':'同步失败');
+        showToast(`同步失败：${apiErrorMessage(error)}`,'error');
+
+        if(error.status===401){
+            config.token='';
+            updateAdminUI();
+            render();
+        }
+        if(error.status===409)result={ok:false,conflict:true};
+    }finally{
+        syncing=false;
+        syncBtn.disabled=false;
+    }
+
+    if(result.uploadedFingerprint&&fingerprint(state)!==result.uploadedFingerprint){
+        syncQueued=true;
+    }
+
+    if(syncQueued&&!result.conflict){
+        syncQueued=false;
+        setTimeout(()=>sync(false,false),0);
+    }else if(result.conflict){
+        syncQueued=false;
+    }
+
+    return result.ok;
+}
+function scheduleSync(){
+    if(!validConfig())return;
+    clearTimeout(autoTimer);
+    autoTimer=setTimeout(()=>{
+        autoTimer=null;
+        sync(false,false);
+    },AUTO_DELAY);
+}
+function markChange(){
+    saveLocal();
+    if(validConfig()){
+        setStatus('offline','待同步');
+        lastSyncTime.textContent='有未同步修改';
+    }
+    scheduleSync();
+}
+
+// ---------- 导入导出 ----------
+function downloadJson(){
+    const blob=new Blob([JSON.stringify(normalizeState(state),null,2)],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=`region_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+function importFile(file){
+    if(!admin()){showToast('请先配置并验证 Token','error');return}
+    if(!file)return;
+    if(file.size>MAX_SYNC){
+        showToast('文件超过 750 KB','error');
+        return;
+    }
+
+    const reader=new FileReader();
+    reader.onload=event=>{
+        try{
+            const incoming=normalizeState(JSON.parse(event.target.result));
+            if(!confirm('导入会替换当前 Region 数据，确定继续吗？'))return;
+            state=incoming;
+            addSelected=[];
+            editSelected=[];
+            closeRemarkPanels();
+            render();
+            markChange();
+            showToast('导入成功','success');
+        }catch(error){
+            showToast(`导入失败：${error.message}`,'error');
+        }
+    };
+    reader.readAsText(file,'utf-8');
+}
+
+// ---------- 公开读取 ----------
+function loadCachedState(){
+    const stored=lg(STATE_KEY);
+    if(!stored)return null;
+    try{return normalizeState(JSON.parse(stored))}catch(e){return null}
+}
+async function loadPublic(){
+    setStatus('syncing','正在读取公开数据…');
+    try{
+        const response=await fetch(publicDataUrl(),{cache:'no-store'});
+        if(!response.ok)throw new Error(`HTTP ${response.status}`);
+        const publicState=normalizeState(await response.json());
+        const localState=loadCachedState();
+        const hasBaseline=admin()&&meta.target===target()&&typeof meta.lastSyncedFingerprint==='string';
+        const localUnsynced=Boolean(localState&&hasBaseline&&fingerprint(localState)!==meta.lastSyncedFingerprint);
+
+        state=localUnsynced?localState:publicState;
+        render();
+
+        if(localUnsynced){
+            setStatus('offline','公开阅读 · 有未同步管理修改');
+            lastSyncTime.textContent='显示当前浏览器中的未同步管理数据';
+        }else{
+            setStatus('online',admin()?'公开阅读 · 管理已配置':'公开阅读');
+            lastSyncTime.textContent=`公开数据 · ${state.entries.length} 条`;
+        }
+    }catch(error){
+        console.error(error);
+        const local=loadCachedState();
+        state=local||{entries:[],remarks:[]};
+        render();
+        setStatus('offline','公开数据读取失败');
+        lastSyncTime.textContent=local?'暂时显示浏览器缓存':`请确认 ${PUBLIC_FILE} 与网页位于同一发布目录`;
+    }
+}
+
+// ---------- 配置保存 ----------
+async function saveConfig(event){
+    event.preventDefault();
+
+    const token=normalizeToken(cfgToken.value);
+    const owner=clean(cfgOwner.value);
+    const repo=clean(cfgRepo.value);
+    const file=clean(cfgFile.value)||'region_data.json';
+
+    if(!token){
+        showToast('请输入 GitHub Token','error');
+        cfgToken.focus();
+        return;
+    }
+    if(!owner){
+        showToast('请输入仓库所有者','error');
+        cfgOwner.focus();
+        return;
+    }
+    if(!repo){
+        showToast('请输入仓库名称','error');
+        cfgRepo.focus();
+        return;
+    }
+    if(!file||file.endsWith('/')){
+        showToast('请输入有效的数据文件名','error');
+        cfgFile.focus();
+        return;
+    }
+
+    const oldTarget=target();
+    const oldText=configSave.textContent;
+    configSave.disabled=true;
+    configSave.textContent='正在验证…';
+    setStatus('syncing','正在验证 Token…');
+
+    try{
+        const verified=await verifyTokenAndRepo(token,owner,repo);
+        cfgToken.value=verified.token;
+
+        config={
+            token:verified.token,
+            tokenName:clean(cfgTokenName.value),
+            activeTokenId:'',
+            owner,
+            repo,
+            file
+        };
+        config.activeTokenId=upsertProfile();
+        saveConfigBase();
+
+        if(oldTarget!==target()){
+            meta=emptyMeta(target());
+            saveMeta();
+        }
+
+        closeConfig();
+        updateAdminUI();
+        render();
+        setStatus('online',`公开阅读 · 管理已连接 · ${verified.user.login}`);
+        showToast(`Token 验证成功：${verified.user.login}`,'success');
+        await sync(true,true);
+    }catch(error){
+        console.error(error);
+        setStatus('offline',error.status===401?'Token 无效':'配置验证失败');
+        showToast(`配置失败：${apiErrorMessage(error)}`,'error');
+        cfgToken.focus();
+    }finally{
+        configSave.disabled=false;
+        configSave.textContent=oldText;
+    }
+}
+
+// ---------- 事件 ----------
+remarkInput.addEventListener('click',event=>{
+    event.stopPropagation();
+    setRemarkPanelOpen('edit',false);
+    setRemarkPanelOpen('add',true);
+    renderRemarkCombo('add');
+});
+editRemarkInput.addEventListener('click',event=>{
+    event.stopPropagation();
+    setRemarkPanelOpen('add',false);
+    setRemarkPanelOpen('edit',true);
+    renderRemarkCombo('edit');
+});
+
+remarkTrigger.addEventListener('click',event=>{
+    event.stopPropagation();
+    setRemarkPanelOpen('edit',false);
+    setRemarkPanelOpen('add',remarkPanel.classList.contains('hidden'));
+    renderRemarkCombo('add');
+});
+editRemarkTrigger.addEventListener('click',event=>{
+    event.stopPropagation();
+    setRemarkPanelOpen('add',false);
+    setRemarkPanelOpen('edit',editRemarkPanel.classList.contains('hidden'));
+    renderRemarkCombo('edit');
+});
+
+remarkInput.addEventListener('input',()=>renderRemarkCombo('add'));
+editRemarkInput.addEventListener('input',()=>renderRemarkCombo('edit'));
+
+remarkInput.addEventListener('keydown',event=>{
+    if(event.key==='Enter'){
+        event.preventDefault();
+        addCurrentRemark('add');
+    }
+});
+editRemarkInput.addEventListener('keydown',event=>{
+    if(event.key==='Enter'){
+        event.preventDefault();
+        addCurrentRemark('edit');
+    }
+});
+
+remarkOptions.addEventListener('click',event=>{
+    const button=event.target.closest('.remark-option[data-value]');
+    if(button)addHistoryRemarkToSelection('add',button.dataset.value);
+});
+editRemarkOptions.addEventListener('click',event=>{
+    const button=event.target.closest('.remark-option[data-value]');
+    if(button)addHistoryRemarkToSelection('edit',button.dataset.value);
+});
+
+remarkSelected.addEventListener('click',event=>{
+    const button=event.target.closest('.selected-remark-remove[data-value]');
+    if(button)removeSelectedRemark('add',button.dataset.value);
+});
+editRemarkSelected.addEventListener('click',event=>{
+    const button=event.target.closest('.selected-remark-remove[data-value]');
+    if(button)removeSelectedRemark('edit',button.dataset.value);
+});
+
+remarkAddCurrent.addEventListener('click',()=>addCurrentRemark('add'));
+editRemarkAddCurrent.addEventListener('click',()=>addCurrentRemark('edit'));
+remarkManage.addEventListener('click',openRemarkManager);
+editRemarkManage.addEventListener('click',openRemarkManager);
+
+remarkHistoryList.addEventListener('click',event=>{
+    const row=event.target.closest('.history-row');
+    if(!row)return;
+    const oldValue=row.dataset.old;
+    const input=row.querySelector('input');
+    if(event.target.closest('.history-save'))renameRemarkHistory(oldValue,input.value);
+    if(event.target.closest('.history-delete'))deleteRemarkHistory(oldValue);
+});
+
+remarkManagerClose.addEventListener('click',()=>remarkManagerModal.classList.add('hidden'));
+
+document.addEventListener('click',event=>{
+    const addInsidePanel=remarkPanel.contains(event.target);
+    const addOnInput=remarkInput.contains(event.target);
+    const addOnTrigger=remarkTrigger.contains(event.target);
+
+    const editInsidePanel=editRemarkPanel.contains(event.target);
+    const editOnInput=editRemarkInput.contains(event.target);
+    const editOnTrigger=editRemarkTrigger.contains(event.target);
+
+    if(!addInsidePanel&&!addOnInput&&!addOnTrigger)setRemarkPanelOpen('add',false);
+    if(!editInsidePanel&&!editOnInput&&!editOnTrigger)setRemarkPanelOpen('edit',false);
+});
+
+addBtn.addEventListener('click',addEntry);
+regionInput.addEventListener('keydown',event=>{
+    if(event.key==='Enter'){
+        event.preventDefault();
+        addEntry();
+    }
+});
+
+tableBody.addEventListener('click',event=>{
+    const edit=event.target.closest('.edit-btn[data-id]');
+    if(edit)return openEdit(edit.dataset.id);
+    const del=event.target.closest('.delete-btn[data-id]');
+    if(del)deleteEntry(del.dataset.id);
+});
+
+editCancel.addEventListener('click',()=>{
+    editingId='';
+    editSelected=[];
+    editRemarkInput.value='';
+    closeRemarkPanels();
+    editModal.classList.add('hidden');
+});
+editSave.addEventListener('click',saveEdit);
+
+configBtn.addEventListener('click',openConfig);
+configCancel.addEventListener('click',closeConfig);
+configForm.addEventListener('submit',saveConfig);
+cfgSavedToken.addEventListener('change',()=>{
+    cfgSavedToken.value?useProfile(cfgSavedToken.value):newProfile();
+});
+cfgNewTokenBtn.addEventListener('click',newProfile);
+cfgDeleteTokenBtn.addEventListener('click',deleteProfile);
+
+syncBtn.addEventListener('click',()=>sync(true,true));
+exportBtn.addEventListener('click',downloadJson);
+importBtn.addEventListener('click',()=>fileInput.click());
+fileInput.addEventListener('change',()=>{
+    importFile(fileInput.files?.[0]);
+    fileInput.value='';
+});
+
+document.addEventListener('keydown',event=>{
+    if(event.key!=='Escape')return;
+
+    if(!remarkManagerModal.classList.contains('hidden')){
+        remarkManagerModal.classList.add('hidden');
+        return;
+    }
+    if(!editModal.classList.contains('hidden')){
+        editingId='';
+        editSelected=[];
+        editRemarkInput.value='';
+        closeRemarkPanels();
+        editModal.classList.add('hidden');
+        return;
+    }
+    if(!configModal.classList.contains('hidden')){
+        closeConfig();
+        return;
+    }
+    closeRemarkPanels();
+});
+
+backToTopBtn.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
+addEventListener('scroll',()=>{
+    backToTopBtn.classList.toggle('visible',scrollY>260);
+},{passive:true});
+
+// ---------- 启动 ----------
+loadMeta();
+loadConfig();
+updateAdminUI();
+updateSyncTime();
+loadPublic().then(()=>{
+    if(validConfig())sync(false,false);
+});
+})();
+</script>
+</body>
+</html>
