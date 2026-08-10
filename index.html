@@ -778,16 +778,28 @@ function uniq(values){
     return [...map.values()];
 }
 function sortRemarks(values){
+    // 只允许用于“备注历史/下拉候选”的数字升序。
     return uniq(values).sort((a,b)=>numericCollator.compare(clean(a),clean(b)));
+}
+function orderedEntryRemarks(item){
+    // remarkOrder 是条目内部备注顺序的权威字段。
+    // 兼容旧数据：没有 remarkOrder 时才回退到旧 remarks 数组，并保持数组原顺序。
+    if(!item||typeof item!=='object')return[];
+    const source=Array.isArray(item.remarkOrder)
+        ? item.remarkOrder
+        : (Array.isArray(item.remarks)?item.remarks:[]);
+    return uniq(source);
 }
 function normalizeEntry(item){
     if(!item||typeof item!=='object')return null;
     const region=clean(item.region);
     if(!region)return null;
+    const orderedRemarks=orderedEntryRemarks(item);
     return{
         id:clean(item.id)||uid(),
         region,
-        remarks:uniq(Array.isArray(item.remarks)?item.remarks:[])
+        remarks:[...orderedRemarks],
+        remarkOrder:[...orderedRemarks]
     };
 }
 function normalizeState(value){
@@ -805,13 +817,18 @@ function normalizeState(value){
         ? sortRemarks(source.remarks)
         : sortRemarks(entries.flatMap(item=>item.remarks));
 
-    return{schemaVersion:1,entries,remarks:history};
+    return{schemaVersion:2,entries,remarks:history};
 }
 function fingerprint(value=state){
     const normalized=normalizeState(value);
     return JSON.stringify({
-        schemaVersion:1,
-        entries:normalized.entries.map(x=>({id:x.id,region:x.region,remarks:x.remarks})),
+        schemaVersion:2,
+        entries:normalized.entries.map(x=>({
+            id:x.id,
+            region:x.region,
+            remarks:x.remarks,
+            remarkOrder:x.remarkOrder
+        })),
         remarks:normalized.remarks
     });
 }
@@ -992,7 +1009,9 @@ function renameRemarkHistory(oldValue,newValue){
 
     state.remarks=sortRemarks(state.remarks.map(v=>key(v)===key(old)?neu:v));
     for(const entry of state.entries){
-        entry.remarks=uniq(entry.remarks.map(v=>key(v)===key(old)?neu:v));
+        const renamed=orderedEntryRemarks(entry).map(v=>key(v)===key(old)?neu:v);
+        entry.remarkOrder=uniq(renamed);
+        entry.remarks=[...entry.remarkOrder];
     }
     addSelected=uniq(addSelected.map(v=>key(v)===key(old)?neu:v));
     editSelected=uniq(editSelected.map(v=>key(v)===key(old)?neu:v));
@@ -1007,6 +1026,7 @@ function renameRemarkHistory(oldValue,newValue){
 function deleteRemarkHistory(value){
     const v=clean(value);
     if(!confirm(`确定从备注下拉历史中删除“${v}”吗？\n\n已有条目中的备注不会改变。`))return;
+    // 这里只删除下拉历史；绝不修改任何条目的 remarkOrder/remarks。
     state.remarks=state.remarks.filter(x=>key(x)!==key(v));
     saveLocal();
     renderRemarkManager();
@@ -1024,8 +1044,9 @@ function render(){
     const canManage=admin();
     tableBody.innerHTML=state.entries.length
         ? state.entries.map(item=>{
-            const remarks=item.remarks.length
-                ? `<div class="region-remarks">${item.remarks.map(v=>`<span class="region-remark">${esc(v)}</span>`).join('')}</div>`
+            const orderedRemarks=orderedEntryRemarks(item);
+            const remarks=orderedRemarks.length
+                ? `<div class="region-remarks">${orderedRemarks.map(v=>`<span class="region-remark">${esc(v)}</span>`).join('')}</div>`
                 : '';
             const actions=canManage
                 ? `<td class="col-action"><button class="action-btn edit-btn" data-id="${attr(item.id)}" type="button">编辑</button><button class="action-btn delete-btn" data-id="${attr(item.id)}" type="button">删除</button></td>`
@@ -1060,7 +1081,8 @@ function addEntry(){
     state.entries.push({
         id:uid(),
         region,
-        remarks
+        remarks:[...remarks],
+        remarkOrder:[...remarks]
     });
 
     regionInput.value='';
@@ -1080,7 +1102,7 @@ function openEdit(id){
     editingId=id;
     editRegion.value=item.region;
     editRemarkInput.value='';
-    editSelected=uniq(item.remarks);
+    editSelected=orderedEntryRemarks(item);
     renderRemarkCombo('edit');
     editModal.classList.remove('hidden');
     setTimeout(()=>editRegion.focus(),30);
@@ -1107,7 +1129,8 @@ function saveEdit(){
     for(const remark of remarks)addRemarkHistory(remark);
 
     item.region=region;
-    item.remarks=remarks;
+    item.remarkOrder=[...remarks];
+    item.remarks=[...remarks];
 
     editingId='';
     editSelected=[];
