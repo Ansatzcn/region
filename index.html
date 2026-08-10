@@ -544,7 +544,7 @@ button{cursor:pointer}
     <section class="toolbar">
         <div class="toolbar-group">
             <button class="btn btn-sync hidden" id="syncBtn" type="button">同步</button>
-            <button class="btn" id="configBtn" type="button">配置</button>
+            <button class="btn" id="configBtn" type="button">配置</button><button class="btn hidden" id="remarkManageTop" type="button">管理</button>
             <button class="btn" id="exportBtn" type="button">导出</button>
             <button class="btn hidden" id="importBtn" type="button">导入</button>
             <input type="file" id="fileInput" accept=".json,application/json" hidden>
@@ -569,9 +569,6 @@ button{cursor:pointer}
                     </div>
                     <div class="remark-panel hidden" id="remarkPanel">
                         <div id="remarkOptions"></div>
-                        <div class="remark-actions">
-                            <button class="remark-action" id="remarkManage" type="button">管理备注历史…</button>
-                        </div>
                     </div>
                     <div class="selected-remarks" id="remarkSelected"></div>
                 </div>
@@ -619,9 +616,6 @@ button{cursor:pointer}
                     </div>
                     <div class="remark-panel hidden" id="editRemarkPanel">
                         <div id="editRemarkOptions"></div>
-                        <div class="remark-actions">
-                            <button class="remark-action" id="editRemarkManage" type="button">管理备注历史…</button>
-                        </div>
                     </div>
                     <div class="selected-remarks" id="editRemarkSelected"></div>
                 </div>
@@ -734,17 +728,17 @@ exportBtn=$('exportBtn'),importBtn=$('importBtn'),fileInput=$('fileInput'),lastS
 addSection=$('addSection'),actionHead=$('actionHead'),
 regionInput=$('regionInput'),remarkCombo=$('remarkCombo'),remarkInput=$('remarkInput'),remarkTrigger=$('remarkTrigger'),
 remarkPanel=$('remarkPanel'),remarkOptions=$('remarkOptions'),
-remarkManage=$('remarkManage'),remarkSelected=$('remarkSelected'),addBtn=$('addBtn'),tableBody=$('tableBody'),
+remarkSelected=$('remarkSelected'),addBtn=$('addBtn'),tableBody=$('tableBody'),
 countDisplay=$('countDisplay'),editModal=$('editModal'),editRegion=$('editRegion'),editRemarkCombo=$('editRemarkCombo'),
 editRemarkInput=$('editRemarkInput'),editRemarkTrigger=$('editRemarkTrigger'),editRemarkPanel=$('editRemarkPanel'),
 editRemarkOptions=$('editRemarkOptions'),
-editRemarkManage=$('editRemarkManage'),editRemarkSelected=$('editRemarkSelected'),editCancel=$('editCancel'),
+editRemarkSelected=$('editRemarkSelected'),editCancel=$('editCancel'),
 editSave=$('editSave'),remarkManagerModal=$('remarkManagerModal'),remarkHistoryList=$('remarkHistoryList'),
 remarkManagerClose=$('remarkManagerClose'),configModal=$('configModal'),configForm=$('configForm'),
 cfgSavedToken=$('cfgSavedToken'),cfgNewTokenBtn=$('cfgNewTokenBtn'),cfgDeleteTokenBtn=$('cfgDeleteTokenBtn'),
 cfgTokenName=$('cfgTokenName'),cfgToken=$('cfgToken'),cfgOwner=$('cfgOwner'),cfgRepo=$('cfgRepo'),
 cfgFile=$('cfgFile'),configCancel=$('configCancel'),configSave=$('configSave'),
-backToTopBtn=$('backToTopBtn'),toast=$('toast');
+remarkManageTop=$('remarkManageTop'),backToTopBtn=$('backToTopBtn'),toast=$('toast');
 
 let state={entries:[],remarks:[]};
 let addSelected=[];
@@ -886,6 +880,7 @@ function updateAdminUI(){
     addSection.classList.toggle('hidden',!on);
     syncBtn.classList.toggle('hidden',!on);
     importBtn.classList.toggle('hidden',!on);
+    remarkManageTop.classList.toggle('hidden',!on);
     actionHead.classList.toggle('hidden',!on);
 }
 
@@ -1982,8 +1977,14 @@ editRemarkSelected.addEventListener('click',event=>{
     if(button)removeSelectedRemark('edit',button.dataset.value);
 });
 
-remarkManage.addEventListener('click',openRemarkManager);
-editRemarkManage.addEventListener('click',openRemarkManager);
+remarkManageTop.addEventListener('click',()=>{
+    if(!admin()){
+        showToast('请先配置并验证 Token','error');
+        return;
+    }
+    closeRemarkPanels();
+    openRemarkManager();
+});
 
 remarkHistoryList.addEventListener('click',event=>{
     const row=event.target.closest('.history-row');
