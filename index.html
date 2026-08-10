@@ -1958,7 +1958,11 @@ remarkInput.addEventListener('keydown',event=>{
 
         // 备注栏已经为空、焦点仍停留在备注栏：
         // 再按一次 Enter，等同点击“添加”按钮。
+        // Region 的主字段是“区划”；添加完成后强制收起备注下拉，
+        // 并把输入焦点切回“区划”，方便立即录入下一条。
         addEntry();
+        closeRemarkPanels();
+        regionInput.focus();
     }
 });
 editRemarkInput.addEventListener('keydown',event=>{
