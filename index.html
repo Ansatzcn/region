@@ -787,7 +787,7 @@ function normalizeEntry(item){
     return{
         id:clean(item.id)||uid(),
         region,
-        remarks:sortRemarks(Array.isArray(item.remarks)?item.remarks:[])
+        remarks:uniq(Array.isArray(item.remarks)?item.remarks:[])
     };
 }
 function normalizeState(value){
@@ -908,7 +908,7 @@ function closeRemarkPanels(){
 }
 function renderRemarkCombo(which){
     const ctx=getRemarkContext(which);
-    const selected=sortRemarks(ctx.selected);
+    const selected=uniq(ctx.selected);
     if(which==='add')addSelected=selected;
     else editSelected=selected;
 
@@ -940,8 +940,8 @@ function addCurrentRemark(which){
     if(!selected.some(v=>key(v)===key(value)))selected.push(value);
     addRemarkHistory(value);
     ctx.input.value='';
-    if(which==='add')addSelected=sortRemarks(selected);
-    else editSelected=sortRemarks(selected);
+    if(which==='add')addSelected=uniq(selected);
+    else editSelected=uniq(selected);
     renderRemarkCombo('add');
     renderRemarkCombo('edit');
     saveLocal();
@@ -952,8 +952,8 @@ function addHistoryRemarkToSelection(which,value){
     const selected=which==='add'?addSelected:editSelected;
     const v=clean(value);
     if(v&&!selected.some(x=>key(x)===key(v)))selected.push(v);
-    if(which==='add')addSelected=sortRemarks(selected);
-    else editSelected=sortRemarks(selected);
+    if(which==='add')addSelected=uniq(selected);
+    else editSelected=uniq(selected);
     renderRemarkCombo(which);
     setRemarkPanelOpen(which,false);
 }
@@ -992,10 +992,10 @@ function renameRemarkHistory(oldValue,newValue){
 
     state.remarks=sortRemarks(state.remarks.map(v=>key(v)===key(old)?neu:v));
     for(const entry of state.entries){
-        entry.remarks=sortRemarks(entry.remarks.map(v=>key(v)===key(old)?neu:v));
+        entry.remarks=uniq(entry.remarks.map(v=>key(v)===key(old)?neu:v));
     }
-    addSelected=sortRemarks(addSelected.map(v=>key(v)===key(old)?neu:v));
-    editSelected=sortRemarks(editSelected.map(v=>key(v)===key(old)?neu:v));
+    addSelected=uniq(addSelected.map(v=>key(v)===key(old)?neu:v));
+    editSelected=uniq(editSelected.map(v=>key(v)===key(old)?neu:v));
 
     saveLocal();
     render();
@@ -1054,7 +1054,7 @@ function addEntry(){
         addRemarkHistory(pending);
     }
 
-    const remarks=sortRemarks(addSelected);
+    const remarks=uniq(addSelected);
     for(const remark of remarks)addRemarkHistory(remark);
 
     state.entries.push({
@@ -1080,7 +1080,7 @@ function openEdit(id){
     editingId=id;
     editRegion.value=item.region;
     editRemarkInput.value='';
-    editSelected=sortRemarks(item.remarks);
+    editSelected=uniq(item.remarks);
     renderRemarkCombo('edit');
     editModal.classList.remove('hidden');
     setTimeout(()=>editRegion.focus(),30);
@@ -1103,7 +1103,7 @@ function saveEdit(){
         addRemarkHistory(pending);
     }
 
-    const remarks=sortRemarks(editSelected);
+    const remarks=uniq(editSelected);
     for(const remark of remarks)addRemarkHistory(remark);
 
     item.region=region;
