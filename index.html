@@ -203,27 +203,37 @@ button{cursor:pointer}
     display:flex;
     flex-wrap:wrap;
     gap:7px;
-    margin-top:.55rem
+    margin-top:.62rem
 }
 .selected-remark{
     display:inline-flex;
     align-items:center;
-    gap:7px;
-    padding:.38rem .65rem;
-    border-radius:999px;
-    background:#eef2f7;
+    gap:8px;
+    min-height:32px;
+    padding:.38rem .62rem;
+    border:1px solid #cbd5e1;
+    border-radius:7px;
+    background:#f8fafc;
     color:#0f172a;
-    font-size:.84rem
+    font-size:.86rem;
+    font-weight:600;
+    box-shadow:0 1px 2px rgba(15,23,42,.04)
 }
 .selected-remark-remove{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:18px;
+    height:18px;
     border:0;
-    background:transparent;
+    border-radius:4px;
+    background:#e2e8f0;
     color:#64748b;
     font-size:.95rem;
     line-height:1;
     padding:0
 }
-.selected-remark-remove:hover{color:#dc2626}
+.selected-remark-remove:hover{background:#fee2e2;color:#dc2626}
 
 .add-button{
     grid-column:1/-1;
@@ -554,13 +564,12 @@ button{cursor:pointer}
                 <label for="remarkInput">备注</label>
                 <div class="remark-combo" id="remarkCombo">
                     <div class="remark-primary-row">
-                        <input id="remarkInput" type="text" autocomplete="off">
+                        <input id="remarkInput" type="text" autocomplete="off" placeholder="输入备注后按 Enter">
                         <button class="remark-toggle" id="remarkTrigger" type="button" aria-label="展开备注历史">▾</button>
                     </div>
                     <div class="remark-panel hidden" id="remarkPanel">
                         <div id="remarkOptions"></div>
                         <div class="remark-actions">
-                            <button class="remark-action" id="remarkAddCurrent" type="button">＋ 添加当前备注</button>
                             <button class="remark-action" id="remarkManage" type="button">管理备注历史…</button>
                         </div>
                     </div>
@@ -605,13 +614,12 @@ button{cursor:pointer}
                 <label for="editRemarkInput">备注</label>
                 <div class="remark-combo" id="editRemarkCombo">
                     <div class="remark-primary-row">
-                        <input id="editRemarkInput" type="text" autocomplete="off">
+                        <input id="editRemarkInput" type="text" autocomplete="off" placeholder="输入备注后按 Enter">
                         <button class="remark-toggle" id="editRemarkTrigger" type="button" aria-label="展开备注历史">▾</button>
                     </div>
                     <div class="remark-panel hidden" id="editRemarkPanel">
                         <div id="editRemarkOptions"></div>
                         <div class="remark-actions">
-                            <button class="remark-action" id="editRemarkAddCurrent" type="button">＋ 添加当前备注</button>
                             <button class="remark-action" id="editRemarkManage" type="button">管理备注历史…</button>
                         </div>
                     </div>
@@ -725,11 +733,11 @@ const statusDot=$('statusDot'),statusText=$('statusText'),syncBtn=$('syncBtn'),c
 exportBtn=$('exportBtn'),importBtn=$('importBtn'),fileInput=$('fileInput'),lastSyncTime=$('lastSyncTime'),
 addSection=$('addSection'),actionHead=$('actionHead'),
 regionInput=$('regionInput'),remarkCombo=$('remarkCombo'),remarkInput=$('remarkInput'),remarkTrigger=$('remarkTrigger'),
-remarkPanel=$('remarkPanel'),remarkOptions=$('remarkOptions'),remarkAddCurrent=$('remarkAddCurrent'),
+remarkPanel=$('remarkPanel'),remarkOptions=$('remarkOptions'),
 remarkManage=$('remarkManage'),remarkSelected=$('remarkSelected'),addBtn=$('addBtn'),tableBody=$('tableBody'),
 countDisplay=$('countDisplay'),editModal=$('editModal'),editRegion=$('editRegion'),editRemarkCombo=$('editRemarkCombo'),
 editRemarkInput=$('editRemarkInput'),editRemarkTrigger=$('editRemarkTrigger'),editRemarkPanel=$('editRemarkPanel'),
-editRemarkOptions=$('editRemarkOptions'),editRemarkAddCurrent=$('editRemarkAddCurrent'),
+editRemarkOptions=$('editRemarkOptions'),
 editRemarkManage=$('editRemarkManage'),editRemarkSelected=$('editRemarkSelected'),editCancel=$('editCancel'),
 editSave=$('editSave'),remarkManagerModal=$('remarkManagerModal'),remarkHistoryList=$('remarkHistoryList'),
 remarkManagerClose=$('remarkManagerClose'),configModal=$('configModal'),configForm=$('configForm'),
@@ -911,8 +919,7 @@ function getRemarkContext(which){
         panel:isAdd?remarkPanel:editRemarkPanel,
         options:isAdd?remarkOptions:editRemarkOptions,
         selectedEl:isAdd?remarkSelected:editRemarkSelected,
-        selected:isAdd?addSelected:editSelected,
-        addCurrent:isAdd?remarkAddCurrent:editRemarkAddCurrent
+        selected:isAdd?addSelected:editSelected
     };
 }
 function setRemarkPanelOpen(which,open){
@@ -942,36 +949,35 @@ function renderRemarkCombo(which){
             <button class="selected-remark-remove" type="button" data-value="${attr(v)}" aria-label="删除备注">×</button>
         </span>
     `).join('');
-
-    ctx.addCurrent.disabled=!clean(ctx.input.value);
 }
-function addCurrentRemark(which){
+function commitRemark(which,value=null){
     const ctx=getRemarkContext(which);
-    const value=clean(ctx.input.value);
-    if(!value){
-        showToast('请输入备注','error');
-        ctx.input.focus();
-        return;
-    }
+    const remark=clean(value===null?ctx.input.value:value);
+    if(!remark)return false;
+
     const selected=which==='add'?addSelected:editSelected;
-    if(!selected.some(v=>key(v)===key(value)))selected.push(value);
-    addRemarkHistory(value);
-    ctx.input.value='';
+
+    // 条目内部备注严格按输入/选择先后顺序保存。
+    if(!selected.some(v=>key(v)===key(remark))){
+        selected.push(remark);
+    }
+
+    // 下拉历史单独维护，仍按数字从小到大排序。
+    addRemarkHistory(remark);
+
     if(which==='add')addSelected=uniq(selected);
     else editSelected=uniq(selected);
+
+    // Enter 后输入框清空，刚确认的备注立即变成下方小方块。
+    ctx.input.value='';
     renderRemarkCombo('add');
     renderRemarkCombo('edit');
     saveLocal();
-    setRemarkPanelOpen(which,false);
     ctx.input.focus();
+    return true;
 }
 function addHistoryRemarkToSelection(which,value){
-    const selected=which==='add'?addSelected:editSelected;
-    const v=clean(value);
-    if(v&&!selected.some(x=>key(x)===key(v)))selected.push(v);
-    if(which==='add')addSelected=uniq(selected);
-    else editSelected=uniq(selected);
-    renderRemarkCombo(which);
+    commitRemark(which,value);
     setRemarkPanelOpen(which,false);
 }
 function removeSelectedRemark(which,value){
@@ -1069,11 +1075,7 @@ function addEntry(){
         return;
     }
 
-    const pending=clean(remarkInput.value);
-    if(pending){
-        if(!addSelected.some(v=>key(v)===key(pending)))addSelected.push(pending);
-        addRemarkHistory(pending);
-    }
+    if(clean(remarkInput.value))commitRemark('add');
 
     const remarks=uniq(addSelected);
     for(const remark of remarks)addRemarkHistory(remark);
@@ -1119,11 +1121,7 @@ function saveEdit(){
         return;
     }
 
-    const pending=clean(editRemarkInput.value);
-    if(pending){
-        if(!editSelected.some(v=>key(v)===key(pending)))editSelected.push(pending);
-        addRemarkHistory(pending);
-    }
+    if(clean(editRemarkInput.value))commitRemark('edit');
 
     const remarks=uniq(editSelected);
     for(const remark of remarks)addRemarkHistory(remark);
@@ -1956,13 +1954,13 @@ editRemarkInput.addEventListener('input',()=>renderRemarkCombo('edit'));
 remarkInput.addEventListener('keydown',event=>{
     if(event.key==='Enter'){
         event.preventDefault();
-        addCurrentRemark('add');
+        commitRemark('add');
     }
 });
 editRemarkInput.addEventListener('keydown',event=>{
     if(event.key==='Enter'){
         event.preventDefault();
-        addCurrentRemark('edit');
+        commitRemark('edit');
     }
 });
 
@@ -1984,8 +1982,6 @@ editRemarkSelected.addEventListener('click',event=>{
     if(button)removeSelectedRemark('edit',button.dataset.value);
 });
 
-remarkAddCurrent.addEventListener('click',()=>addCurrentRemark('add'));
-editRemarkAddCurrent.addEventListener('click',()=>addCurrentRemark('edit'));
 remarkManage.addEventListener('click',openRemarkManager);
 editRemarkManage.addEventListener('click',openRemarkManager);
 
