@@ -290,11 +290,40 @@ button{cursor:pointer}
 }
 .region-table tbody tr:last-child td{border-bottom:0}
 .region-table tbody tr:hover{background:#fafcff}
+.region-title-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:1rem;
+    width:100%
+}
 .region-name{
+    min-width:0;
     color:#0f172a;
     font-size:1rem;
     font-weight:700;
+    line-height:1.5;
     overflow-wrap:anywhere
+}
+.region-edit-link{
+    flex:0 0 auto;
+    margin:0;
+    padding:0;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    color:#64748b;
+    font-size:.82rem;
+    font-weight:600;
+    line-height:1.5;
+    text-decoration:underline;
+    text-underline-offset:2px;
+    cursor:pointer
+}
+.region-edit-link:hover,
+.region-edit-link:focus-visible{
+    color:#1e3a8a;
+    outline:none
 }
 .region-remarks{
     margin-top:.32rem;
@@ -516,7 +545,7 @@ button{cursor:pointer}
     .form-grid{grid-template-columns:1fr}
     .form-group.full-width{grid-column:auto}
     .region-table th,.region-table td{padding:.65rem .8rem;font-size:.88rem}
-    .col-action{width:86px}
+    .region-title-row{gap:.75rem}
     .dialog{
         width:100%;
         max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
@@ -566,7 +595,7 @@ button{cursor:pointer}
                 <label for="remarkInput">备注</label>
                 <div class="remark-combo" id="remarkCombo">
                     <div class="remark-primary-row">
-                        <input id="remarkInput" type="text" autocomplete="off" placeholder="输入备注后按 Enter">
+                        <input id="remarkInput" type="text" autocomplete="off">
                         <button class="remark-toggle" id="remarkTrigger" type="button" aria-label="展开备注历史">▾</button>
                     </div>
                     <div class="remark-panel hidden" id="remarkPanel">
@@ -590,7 +619,6 @@ button{cursor:pointer}
                 <thead>
                     <tr>
                         <th>区划</th>
-                        <th class="col-action hidden" id="actionHead">操作</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -613,7 +641,7 @@ button{cursor:pointer}
                 <label for="editRemarkInput">备注</label>
                 <div class="remark-combo" id="editRemarkCombo">
                     <div class="remark-primary-row">
-                        <input id="editRemarkInput" type="text" autocomplete="off" placeholder="输入备注后按 Enter">
+                        <input id="editRemarkInput" type="text" autocomplete="off">
                         <button class="remark-toggle" id="editRemarkTrigger" type="button" aria-label="展开备注历史">▾</button>
                     </div>
                     <div class="remark-panel hidden" id="editRemarkPanel">
@@ -728,7 +756,7 @@ const API_VERSION='2026-03-10';
 const $=id=>document.getElementById(id);
 const statusDot=$('statusDot'),statusText=$('statusText'),syncBtn=$('syncBtn'),configBtn=$('configBtn'),
 exportBtn=$('exportBtn'),importBtn=$('importBtn'),fileInput=$('fileInput'),lastSyncTime=$('lastSyncTime'),
-addSection=$('addSection'),actionHead=$('actionHead'),
+addSection=$('addSection'),
 regionInput=$('regionInput'),remarkCombo=$('remarkCombo'),remarkInput=$('remarkInput'),remarkTrigger=$('remarkTrigger'),
 remarkPanel=$('remarkPanel'),remarkOptions=$('remarkOptions'),
 remarkSelected=$('remarkSelected'),addBtn=$('addBtn'),tableBody=$('tableBody'),
@@ -884,7 +912,6 @@ function updateAdminUI(){
     syncBtn.classList.toggle('hidden',!on);
     importBtn.classList.toggle('hidden',!on);
     remarkManageTop.classList.toggle('hidden',!on);
-    actionHead.classList.toggle('hidden',!on);
 }
 
 // ---------- 本地数据 ----------
@@ -1052,12 +1079,12 @@ function render(){
             const remarks=orderedRemarks.length
                 ? `<div class="region-remarks">${orderedRemarks.map(v=>`<span class="region-remark">${esc(v)}</span>`).join('')}</div>`
                 : '';
-            const actions=canManage
-                ? `<td class="col-action"><button class="action-btn edit-btn" data-id="${attr(item.id)}" type="button">编辑</button></td>`
+            const editLink=canManage
+                ? `<button class="region-edit-link edit-btn" data-id="${attr(item.id)}" type="button">编辑</button>`
                 : '';
-            return `<tr><td><div class="region-name">${esc(item.region)}</div>${remarks}</td>${actions}</tr>`;
+            return `<tr><td><div class="region-title-row"><div class="region-name">${esc(item.region)}</div>${editLink}</div>${remarks}</td></tr>`;
         }).join('')
-        : `<tr class="empty-row"><td colspan="${canManage?2:1}">暂无条目</td></tr>`;
+        : `<tr class="empty-row"><td colspan="1">暂无条目</td></tr>`;
 
     updateAdminUI();
     renderRemarkCombo('add');
