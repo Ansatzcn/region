@@ -394,6 +394,8 @@ button{cursor:pointer}
     font-weight:650
 }
 .dialog-btn.secondary{background:#f1f5f9;color:#334155}
+.dialog-btn.danger{background:#fee2e2;color:#991b1b}
+.dialog-btn.danger:hover{background:#fecaca}
 .dialog-btn.primary{background:#1e293b;color:#fff}
 .dialog-btn.primary:hover{background:#0f172a}
 
@@ -622,6 +624,7 @@ button{cursor:pointer}
             </div>
         </div>
         <div class="dialog-actions">
+            <button class="dialog-btn danger" id="editDelete" type="button">删除</button>
             <button class="dialog-btn secondary" id="editCancel" type="button">取消</button>
             <button class="dialog-btn primary" id="editSave" type="button">保存</button>
         </div>
@@ -732,7 +735,7 @@ remarkSelected=$('remarkSelected'),addBtn=$('addBtn'),tableBody=$('tableBody'),
 countDisplay=$('countDisplay'),editModal=$('editModal'),editRegion=$('editRegion'),editRemarkCombo=$('editRemarkCombo'),
 editRemarkInput=$('editRemarkInput'),editRemarkTrigger=$('editRemarkTrigger'),editRemarkPanel=$('editRemarkPanel'),
 editRemarkOptions=$('editRemarkOptions'),
-editRemarkSelected=$('editRemarkSelected'),editCancel=$('editCancel'),
+editRemarkSelected=$('editRemarkSelected'),editDelete=$('editDelete'),editCancel=$('editCancel'),
 editSave=$('editSave'),remarkManagerModal=$('remarkManagerModal'),remarkHistoryList=$('remarkHistoryList'),
 remarkManagerClose=$('remarkManagerClose'),configModal=$('configModal'),configForm=$('configForm'),
 cfgSavedToken=$('cfgSavedToken'),cfgNewTokenBtn=$('cfgNewTokenBtn'),cfgDeleteTokenBtn=$('cfgDeleteTokenBtn'),
@@ -1050,7 +1053,7 @@ function render(){
                 ? `<div class="region-remarks">${orderedRemarks.map(v=>`<span class="region-remark">${esc(v)}</span>`).join('')}</div>`
                 : '';
             const actions=canManage
-                ? `<td class="col-action"><button class="action-btn edit-btn" data-id="${attr(item.id)}" type="button">编辑</button><button class="action-btn delete-btn" data-id="${attr(item.id)}" type="button">删除</button></td>`
+                ? `<td class="col-action"><button class="action-btn edit-btn" data-id="${attr(item.id)}" type="button">编辑</button></td>`
                 : '';
             return `<tr><td><div class="region-name">${esc(item.region)}</div>${remarks}</td>${actions}</tr>`;
         }).join('')
@@ -1135,14 +1138,15 @@ function saveEdit(){
     showToast('已保存','success');
 }
 function deleteEntry(id){
-    if(!admin()){showToast('请先配置并验证 Token','error');return}
+    if(!admin()){showToast('请先配置并验证 Token','error');return false}
     const item=state.entries.find(x=>x.id===id);
-    if(!item)return;
-    if(!confirm(`确定删除“${item.region}”吗？`))return;
+    if(!item)return false;
+    if(!confirm(`确定删除“${item.region}”吗？`))return false;
     state.entries=state.entries.filter(x=>x.id!==id);
     render();
     markChange();
     showToast('已删除','success');
+    return true;
 }
 
 // ---------- Token 配置 ----------
@@ -2033,11 +2037,20 @@ regionInput.addEventListener('keydown',event=>{
 
 tableBody.addEventListener('click',event=>{
     const edit=event.target.closest('.edit-btn[data-id]');
-    if(edit)return openEdit(edit.dataset.id);
-    const del=event.target.closest('.delete-btn[data-id]');
-    if(del)deleteEntry(del.dataset.id);
+    if(edit)openEdit(edit.dataset.id);
 });
 
+editDelete.addEventListener('click',()=>{
+    const id=editingId;
+    if(!id)return;
+    if(deleteEntry(id)){
+        editingId='';
+        editSelected=[];
+        editRemarkInput.value='';
+        closeRemarkPanels();
+        editModal.classList.add('hidden');
+    }
+});
 editCancel.addEventListener('click',()=>{
     editingId='';
     editSelected=[];
