@@ -309,8 +309,10 @@ button{cursor:pointer}
     flex:0 0 auto;
     margin:0;
     padding:0;
-    border:none;
-    background:transparent;
+    border:0;
+    border-radius:0;
+    background:none;
+    box-shadow:none;
     color:#64748b;
     font-family:'Segoe UI',Roboto,system-ui,sans-serif;
     font-size:.8rem;
@@ -323,6 +325,8 @@ button{cursor:pointer}
 }
 .region-edit-link:hover,
 .region-edit-link:focus-visible{
+    background:none;
+    box-shadow:none;
     color:#1e3a8a;
     outline:none
 }
@@ -1081,7 +1085,7 @@ function render(){
                 ? `<div class="region-remarks">${orderedRemarks.map(v=>`<span class="region-remark">${esc(v)}</span>`).join('')}</div>`
                 : '';
             const editLink=canManage
-                ? `<button class="region-edit-link edit-btn" data-id="${attr(item.id)}" type="button">编辑</button>`
+                ? `<button class="region-edit-link" data-id="${attr(item.id)}" type="button">编辑</button>`
                 : '';
             return `<tr><td><div class="region-title-row"><div class="region-name">${esc(item.region)}</div>${editLink}</div>${remarks}</td></tr>`;
         }).join('')
@@ -2064,7 +2068,7 @@ regionInput.addEventListener('keydown',event=>{
 });
 
 tableBody.addEventListener('click',event=>{
-    const edit=event.target.closest('.edit-btn[data-id]');
+    const edit=event.target.closest('.region-edit-link[data-id]');
     if(edit)openEdit(edit.dataset.id);
 });
 
