@@ -432,6 +432,7 @@ button{cursor:pointer}
 .dialog-btn.danger:hover{background:#fecaca}
 .dialog-btn.primary{background:#1e293b;color:#fff}
 .dialog-btn.primary:hover{background:#0f172a}
+#editModal .dialog-actions .danger{margin-right:auto}
 
 .history-list{
     display:flex;
@@ -559,6 +560,7 @@ button{cursor:pointer}
     .dialog-scroll{padding:1.2rem 1.2rem .8rem}
     .dialog-actions{padding:.85rem 1.2rem max(.85rem,env(safe-area-inset-bottom))}
     .dialog-actions .dialog-btn{flex:1}
+    #editModal .dialog-actions .dialog-btn{flex:0 0 auto}
     .token-row{grid-template-columns:minmax(0,1fr) auto}
     .token-btn.danger{grid-column:1/-1}
     .history-row{grid-template-columns:1fr auto}
@@ -780,6 +782,8 @@ let state={entries:[],remarks:[]};
 let addSelected=[];
 let editSelected=[];
 let editingId='';
+let editInitialSnapshot='';
+let editOverlayPointerDown=false;
 let profiles=[];
 let selectedProfileId='';
 let config={token:'',tokenName:'',activeTokenId:'',owner:'',repo:'',file:'region_data.json'};
@@ -1126,6 +1130,24 @@ function addEntry(){
     regionInput.focus();
     showToast('已添加','success');
 }
+function getEditSnapshot(){
+    return JSON.stringify({
+        region:editRegion.value,
+        remarkDraft:editRemarkInput.value,
+        remarks:[...editSelected]
+    });
+}
+function editIsUnchanged(){
+    return Boolean(editingId)&&getEditSnapshot()===editInitialSnapshot;
+}
+function closeEdit(){
+    editingId='';
+    editInitialSnapshot='';
+    editSelected=[];
+    editRemarkInput.value='';
+    closeRemarkPanels();
+    editModal.classList.add('hidden');
+}
 function openEdit(id){
     if(!admin()){showToast('请先配置并验证 Token','error');return}
     const item=state.entries.find(x=>x.id===id);
@@ -1136,6 +1158,7 @@ function openEdit(id){
     editRemarkInput.value='';
     editSelected=orderedEntryRemarks(item);
     renderRemarkCombo('edit');
+    editInitialSnapshot=getEditSnapshot();
     editModal.classList.remove('hidden');
     setTimeout(()=>editRegion.focus(),30);
 }
@@ -1161,6 +1184,7 @@ function saveEdit(){
     item.remarks=[...remarks];
 
     editingId='';
+    editInitialSnapshot='';
     editSelected=[];
     editRemarkInput.value='';
     closeRemarkPanels();
@@ -2075,22 +2099,24 @@ tableBody.addEventListener('click',event=>{
 editDelete.addEventListener('click',()=>{
     const id=editingId;
     if(!id)return;
-    if(deleteEntry(id)){
-        editingId='';
-        editSelected=[];
-        editRemarkInput.value='';
-        closeRemarkPanels();
-        editModal.classList.add('hidden');
-    }
+    if(deleteEntry(id))closeEdit();
 });
-editCancel.addEventListener('click',()=>{
-    editingId='';
-    editSelected=[];
-    editRemarkInput.value='';
-    closeRemarkPanels();
-    editModal.classList.add('hidden');
-});
+editCancel.addEventListener('click',closeEdit);
 editSave.addEventListener('click',saveEdit);
+
+// 只有按下和松开都发生在编辑框外的遮罩层本身，才算真正点击了编辑框外。
+// 若编辑内容未发生任何变化，则关闭；有改动时保持编辑框打开。
+editModal.addEventListener('pointerdown',event=>{
+    editOverlayPointerDown=event.target===editModal;
+});
+editModal.addEventListener('pointerup',event=>{
+    const outsideClick=editOverlayPointerDown&&event.target===editModal;
+    editOverlayPointerDown=false;
+    if(outsideClick&&editIsUnchanged())closeEdit();
+});
+editModal.addEventListener('pointercancel',()=>{
+    editOverlayPointerDown=false;
+});
 
 configBtn.addEventListener('click',openConfig);
 configCancel.addEventListener('click',closeConfig);
@@ -2117,11 +2143,7 @@ document.addEventListener('keydown',event=>{
         return;
     }
     if(!editModal.classList.contains('hidden')){
-        editingId='';
-        editSelected=[];
-        editRemarkInput.value='';
-        closeRemarkPanels();
-        editModal.classList.add('hidden');
+        closeEdit();
         return;
     }
     if(!configModal.classList.contains('hidden')){
