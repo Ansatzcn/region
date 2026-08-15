@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="app-build" content="2026-08-10-region-v1">
+<meta name="app-build" content="2026-08-15-region-v2-scroll-dialogs">
 <title>Region</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -397,6 +397,24 @@ button{cursor:pointer}
 .dialog-scroll::-webkit-scrollbar{width:9px}
 .dialog-scroll::-webkit-scrollbar-track{background:#f1f5f9}
 .dialog-scroll::-webkit-scrollbar-thumb{
+    background:#cbd5e1;
+    border:2px solid #f1f5f9;
+    border-radius:999px
+}
+
+/* Region 配置/编辑弹窗：内容超出视口时在正文区域滚动，底部操作栏保持可见 */
+#configModal .dialog-scroll,
+#editModal .dialog-scroll{
+    overflow-y:auto;
+    scrollbar-width:thin;
+    scrollbar-color:#cbd5e1 #f1f5f9
+}
+#configModal .dialog-scroll::-webkit-scrollbar,
+#editModal .dialog-scroll::-webkit-scrollbar{width:9px}
+#configModal .dialog-scroll::-webkit-scrollbar-track,
+#editModal .dialog-scroll::-webkit-scrollbar-track{background:#f1f5f9}
+#configModal .dialog-scroll::-webkit-scrollbar-thumb,
+#editModal .dialog-scroll::-webkit-scrollbar-thumb{
     background:#cbd5e1;
     border:2px solid #f1f5f9;
     border-radius:999px
