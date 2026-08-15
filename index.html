@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="app-build" content="2026-08-15-region-v2-scroll-dialogs">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="app-build" content="2026-08-15-region-v3-mobile-config-viewport">
 <title>Region</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -579,6 +579,58 @@ button{cursor:pointer}
     .dialog-actions{padding:.85rem 1.2rem max(.85rem,env(safe-area-inset-bottom))}
     .dialog-actions .dialog-btn{flex:1}
     #editModal .dialog-actions .dialog-btn{flex:0 0 auto}
+
+    /* 手机端配置：占满“实际可视区域”，表单独立滚动，底部保存栏永远保留。
+       不再依赖 max-height + flex 的隐式高度计算。 */
+    #configModal{
+        top:var(--config-vtop,0px);
+        right:0;
+        bottom:auto;
+        left:0;
+        width:100%;
+        height:var(--config-vh,100vh);
+        height:var(--config-vh,100dvh);
+        padding:0;
+        align-items:stretch;
+        justify-content:stretch;
+        overflow:hidden
+    }
+    #configModal .dialog{
+        width:100%;
+        max-width:none;
+        height:100%;
+        max-height:none;
+        margin:0;
+        display:grid;
+        grid-template-rows:minmax(0,1fr) auto;
+        overflow:hidden;
+        border-radius:0
+    }
+    #configModal .dialog-scroll{
+        min-width:0;
+        min-height:0;
+        width:100%;
+        overflow-x:hidden;
+        overflow-y:scroll;
+        overscroll-behavior:contain;
+        -webkit-overflow-scrolling:touch;
+        touch-action:pan-y;
+        scrollbar-gutter:stable;
+        padding:max(1.2rem,env(safe-area-inset-top)) 1.2rem 1rem
+    }
+    #configModal .dialog-actions{
+        min-width:0;
+        flex:none;
+        position:relative;
+        z-index:2;
+        padding:.85rem 1.2rem max(.85rem,env(safe-area-inset-bottom));
+        background:#fff;
+        box-shadow:0 -8px 20px rgba(15,23,42,.08)
+    }
+    #configModal .dialog-actions .dialog-btn{
+        min-height:44px;
+        flex:1
+    }
     .token-row{grid-template-columns:minmax(0,1fr) auto}
     .token-btn.danger{grid-column:1/-1}
     .history-row{grid-template-columns:1fr auto}
@@ -1354,6 +1406,17 @@ function loadConfig(){
 }
 function validConfig(){return Boolean(config.token&&config.owner&&config.repo&&config.file)}
 function target(){return validConfig()?`${config.owner}/${config.repo}/${config.file}`:''}
+function isMobileConfigViewport(){
+    return matchMedia('(max-width:700px)').matches;
+}
+function syncConfigViewport(){
+    if(!isMobileConfigViewport())return;
+    const viewport=window.visualViewport;
+    const height=Math.max(320,Math.round(viewport?.height||window.innerHeight||document.documentElement.clientHeight||320));
+    const top=Math.max(0,Math.round(viewport?.offsetTop||0));
+    configModal.style.setProperty('--config-vh',`${height}px`);
+    configModal.style.setProperty('--config-vtop',`${top}px`);
+}
 function openConfig(){
     renderProfiles(config.activeTokenId||selectedProfileId);
     const profile=profiles.find(x=>x.id===config.activeTokenId)||null;
@@ -1362,9 +1425,16 @@ function openConfig(){
     cfgOwner.value=config.owner||profile?.owner||'';
     cfgRepo.value=config.repo||profile?.repo||'';
     cfgFile.value=config.file||profile?.file||'region_data.json';
+    syncConfigViewport();
     configModal.classList.remove('hidden');
+    // 手机端不要自动 focus，避免弹窗一打开就被软键盘压缩。
+    if(!isMobileConfigViewport())setTimeout(()=>cfgToken.focus(),30);
 }
-function closeConfig(){configModal.classList.add('hidden')}
+function closeConfig(){
+    configModal.classList.add('hidden');
+    configModal.style.removeProperty('--config-vh');
+    configModal.style.removeProperty('--config-vtop');
+}
 
 // ---------- GitHub ----------
 function apiErrorMessage(error){
@@ -2139,6 +2209,17 @@ editModal.addEventListener('pointercancel',()=>{
 configBtn.addEventListener('click',openConfig);
 configCancel.addEventListener('click',closeConfig);
 configForm.addEventListener('submit',saveConfig);
+if(window.visualViewport){
+    visualViewport.addEventListener('resize',()=>{
+        if(!configModal.classList.contains('hidden'))syncConfigViewport();
+    },{passive:true});
+    visualViewport.addEventListener('scroll',()=>{
+        if(!configModal.classList.contains('hidden'))syncConfigViewport();
+    },{passive:true});
+}
+addEventListener('orientationchange',()=>{
+    if(!configModal.classList.contains('hidden'))setTimeout(syncConfigViewport,50);
+},{passive:true});
 cfgSavedToken.addEventListener('change',()=>{
     cfgSavedToken.value?useProfile(cfgSavedToken.value):newProfile();
 });
