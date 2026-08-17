@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,interactive-widget=resizes-content">
-<meta name="app-build" content="2026-08-15-region-v3-mobile-config-viewport">
+<meta name="app-build" content="2026-08-17-region-dropdown-row-edit-delete-v1">
 <title>Region</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -163,42 +163,52 @@ button{cursor:pointer}
     box-shadow:0 15px 30px rgba(15,23,42,.14)
 }
 .remark-panel.hidden{display:none!important}
-.remark-option{
-    display:block;
+.remark-option-list{
+    display:flex;
+    flex-direction:column;
+    width:100%
+}
+.remark-option-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    align-items:center;
+    gap:6px;
     width:100%;
-    padding:.55rem .65rem;
+    padding:.28rem 0;
+    border-bottom:1px solid #eef2f7
+}
+.remark-option-row:last-child{border-bottom:0}
+.remark-option{
+    min-width:0;
+    width:100%;
+    padding:.5rem .6rem;
     border:0;
-    border-radius:10px;
+    border-radius:9px;
     background:#fff;
     color:#0f172a;
-    text-align:left
+    text-align:left;
+    overflow-wrap:anywhere
 }
-.remark-option:hover{background:#f1f5f9}
+.remark-option:hover,.remark-option:focus-visible{background:#f1f5f9;outline:none}
+.remark-option[aria-selected="true"]{color:#1d4ed8;font-weight:650}
+.remark-option-edit,.remark-option-delete{
+    padding:.42rem .58rem;
+    border:0;
+    border-radius:9px;
+    font-size:.76rem;
+    font-weight:650;
+    white-space:nowrap
+}
+.remark-option-edit{background:#eff6ff;color:#1d4ed8}
+.remark-option-edit:hover{background:#dbeafe}
+.remark-option-delete{background:#fff1f2;color:#be123c}
+.remark-option-delete:hover{background:#ffe4e6}
 .remark-empty{
     padding:.65rem;
     color:#94a3b8;
     text-align:center;
     font-size:.82rem
 }
-.remark-actions{
-    display:flex;
-    gap:7px;
-    margin-top:.45rem;
-    padding-top:.55rem;
-    border-top:1px solid #e2e8f0
-}
-.remark-action{
-    flex:1;
-    padding:.5rem .6rem;
-    border:0;
-    border-radius:10px;
-    background:#f1f5f9;
-    color:#334155;
-    font-size:.82rem;
-    font-weight:650
-}
-.remark-action:hover{background:#e2e8f0}
-.remark-action:disabled{opacity:.42;cursor:not-allowed}
 .selected-remarks{
     display:flex;
     flex-wrap:wrap;
@@ -652,7 +662,7 @@ button{cursor:pointer}
     <section class="toolbar">
         <div class="toolbar-group">
             <button class="btn btn-sync hidden" id="syncBtn" type="button">同步</button>
-            <button class="btn" id="configBtn" type="button">配置</button><button class="btn hidden" id="remarkManageTop" type="button">管理</button>
+            <button class="btn" id="configBtn" type="button">配置</button>
             <button class="btn" id="exportBtn" type="button">导出</button>
             <button class="btn hidden" id="importBtn" type="button">导入</button>
             <input type="file" id="fileInput" accept=".json,application/json" hidden>
@@ -732,19 +742,6 @@ button{cursor:pointer}
             <button class="dialog-btn danger" id="editDelete" type="button">删除</button>
             <button class="dialog-btn secondary" id="editCancel" type="button">取消</button>
             <button class="dialog-btn primary" id="editSave" type="button">保存</button>
-        </div>
-    </div>
-</section>
-
-<section class="overlay hidden" id="remarkManagerModal" role="dialog" aria-modal="true" aria-labelledby="remarkManagerHeading">
-    <div class="dialog">
-        <div class="dialog-scroll">
-            <h3 id="remarkManagerHeading">管理备注历史</h3>
-            <p class="dialog-desc">历史列表按数字从小到大排序。重命名历史备注时，已有条目中的同名备注也会同步更新。</p>
-            <div class="history-list" id="remarkHistoryList"></div>
-        </div>
-        <div class="dialog-actions">
-            <button class="dialog-btn primary" id="remarkManagerClose" type="button">完成</button>
         </div>
     </div>
 </section>
@@ -841,12 +838,11 @@ countDisplay=$('countDisplay'),editModal=$('editModal'),editRegion=$('editRegion
 editRemarkInput=$('editRemarkInput'),editRemarkTrigger=$('editRemarkTrigger'),editRemarkPanel=$('editRemarkPanel'),
 editRemarkOptions=$('editRemarkOptions'),
 editRemarkSelected=$('editRemarkSelected'),editDelete=$('editDelete'),editCancel=$('editCancel'),
-editSave=$('editSave'),remarkManagerModal=$('remarkManagerModal'),remarkHistoryList=$('remarkHistoryList'),
-remarkManagerClose=$('remarkManagerClose'),configModal=$('configModal'),configForm=$('configForm'),
+editSave=$('editSave'),configModal=$('configModal'),configForm=$('configForm'),
 cfgSavedToken=$('cfgSavedToken'),cfgNewTokenBtn=$('cfgNewTokenBtn'),cfgDeleteTokenBtn=$('cfgDeleteTokenBtn'),
 cfgTokenName=$('cfgTokenName'),cfgToken=$('cfgToken'),cfgOwner=$('cfgOwner'),cfgRepo=$('cfgRepo'),
 cfgFile=$('cfgFile'),configCancel=$('configCancel'),configSave=$('configSave'),
-remarkManageTop=$('remarkManageTop'),backToTopBtn=$('backToTopBtn'),toast=$('toast');
+backToTopBtn=$('backToTopBtn'),toast=$('toast');
 
 let state={entries:[],remarks:[]};
 let addSelected=[];
@@ -990,7 +986,6 @@ function updateAdminUI(){
     addSection.classList.toggle('hidden',!on);
     syncBtn.classList.toggle('hidden',!on);
     importBtn.classList.toggle('hidden',!on);
-    remarkManageTop.classList.toggle('hidden',!on);
 }
 
 // ---------- 本地数据 ----------
@@ -1041,10 +1036,17 @@ function renderRemarkCombo(which){
     else editSelected=selected;
 
     const selectedKeys=new Set(selected.map(key));
-    const history=sortRemarks(state.remarks).filter(v=>!selectedKeys.has(key(v)));
+    // 已选项仍保留在下拉历史中，确保每个历史选项始终都能直接编辑或删除。
+    const history=sortRemarks(state.remarks);
 
     ctx.options.innerHTML=history.length
-        ? history.map(v=>`<button class="remark-option" type="button" data-value="${attr(v)}">${esc(v)}</button>`).join('')
+        ? `<div class="remark-option-list">${history.map(v=>`
+            <div class="remark-option-row" data-value="${attr(v)}">
+                <button class="remark-option" type="button" data-action="select" data-value="${attr(v)}" aria-selected="${selectedKeys.has(key(v))?'true':'false'}">${selectedKeys.has(key(v))?'✓ ':''}${esc(v)}</button>
+                <button class="remark-option-edit" type="button" data-action="edit" data-value="${attr(v)}">编辑</button>
+                <button class="remark-option-delete" type="button" data-action="delete" data-value="${attr(v)}">删除</button>
+            </div>
+        `).join('')}</div>`
         : '<div class="remark-empty">暂无其它备注</div>';
 
     ctx.selectedEl.innerHTML=selected.map(v=>`
@@ -1089,34 +1091,19 @@ function removeSelectedRemark(which,value){
     else editSelected=editSelected.filter(x=>key(x)!==key(value));
     renderRemarkCombo(which);
 }
-function openRemarkManager(){
-    closeRemarkPanels();
-    renderRemarkManager();
-    remarkManagerModal.classList.remove('hidden');
-}
-function renderRemarkManager(){
-    state.remarks=sortRemarks(state.remarks);
-    remarkHistoryList.innerHTML=state.remarks.length
-        ? state.remarks.map(v=>`
-            <div class="history-row" data-old="${attr(v)}">
-                <input type="text" value="${attr(v)}">
-                <button class="history-btn history-save" type="button">保存</button>
-                <button class="history-btn history-delete" type="button">删除</button>
-            </div>
-        `).join('')
-        : '<div class="history-empty">暂无已保存的备注</div>';
-}
 function renameRemarkHistory(oldValue,newValue){
     const old=clean(oldValue),neu=clean(newValue);
     if(!neu){
         showToast('备注不能为空','error');
         return false;
     }
+    if(key(neu)===key(old))return true;
     if(state.remarks.some(v=>key(v)===key(neu)&&key(v)!==key(old))){
         showToast('该备注已存在','error');
         return false;
     }
 
+    // 修改后立即按下拉菜单既有数字排序规则重新排列。
     state.remarks=sortRemarks(state.remarks.map(v=>key(v)===key(old)?neu:v));
     for(const entry of state.entries){
         const renamed=orderedEntryRemarks(entry).map(v=>key(v)===key(old)?neu:v);
@@ -1128,18 +1115,24 @@ function renameRemarkHistory(oldValue,newValue){
 
     saveLocal();
     render();
-    renderRemarkManager();
     markChange();
     showToast('已更新备注','success');
     return true;
 }
+function editRemarkHistoryOption(value){
+    const oldValue=clean(value);
+    if(!oldValue)return;
+    const next=prompt('编辑备注：',oldValue);
+    if(next===null)return;
+    renameRemarkHistory(oldValue,next);
+}
 function deleteRemarkHistory(value){
     const v=clean(value);
-    if(!confirm(`确定从备注下拉历史中删除“${v}”吗？\n\n已有条目中的备注不会改变。`))return;
-    // 这里只删除下拉历史；绝不修改任何条目的 remarkOrder/remarks。
-    state.remarks=state.remarks.filter(x=>key(x)!==key(v));
+    if(!confirm(`确定从备注下拉历史中删除“${v}”吗？
+
+已有条目中的备注不会改变。`))return;
+    state.remarks=sortRemarks(state.remarks.filter(x=>key(x)!==key(v)));
     saveLocal();
-    renderRemarkManager();
     renderRemarkCombo('add');
     renderRemarkCombo('edit');
     markChange();
@@ -2100,14 +2093,19 @@ remarkInput.addEventListener('keydown',event=>{
 
         // 备注栏有内容：先把当前备注确认成标签。
         if(clean(remarkInput.value)){
-            commitRemark('add');
+            const committed=commitRemark('add');
+            if(committed&&addSelected.length>1)setRemarkPanelOpen('add',false);
             return;
         }
 
-        // 备注栏已经为空、焦点仍停留在备注栏：
-        // 再按一次 Enter，等同点击“添加”按钮。
-        // Region 的主字段是“区划”；添加完成后强制收起备注下拉，
-        // 并把输入焦点切回“区划”，方便立即录入下一条。
+        // 已经选中多个备注时，空输入框按 Enter 只负责立即收起下拉，
+        // 避免用户确认多选结果时误触发整条“添加”。
+        if(addSelected.length>1){
+            setRemarkPanelOpen('add',false);
+            return;
+        }
+
+        // 只有未形成多选时，空输入框再次按 Enter 才等同点击“添加”按钮。
         addEntry();
         closeRemarkPanels();
         regionInput.focus();
@@ -2116,18 +2114,28 @@ remarkInput.addEventListener('keydown',event=>{
 editRemarkInput.addEventListener('keydown',event=>{
     if(event.key==='Enter'){
         event.preventDefault();
-        commitRemark('edit');
+        const hadMultiple=editSelected.length>1;
+        const committed=clean(editRemarkInput.value)?commitRemark('edit'):false;
+        if((committed&&editSelected.length>1)||(!committed&&hadMultiple))setRemarkPanelOpen('edit',false);
     }
 });
 
-remarkOptions.addEventListener('click',event=>{
-    const button=event.target.closest('.remark-option[data-value]');
-    if(button)addHistoryRemarkToSelection('add',button.dataset.value);
-});
-editRemarkOptions.addEventListener('click',event=>{
-    const button=event.target.closest('.remark-option[data-value]');
-    if(button)addHistoryRemarkToSelection('edit',button.dataset.value);
-});
+function handleRemarkOptionClick(event,which){
+    const button=event.target.closest('[data-action][data-value]');
+    if(!button)return;
+    const action=button.dataset.action;
+    const value=button.dataset.value;
+    if(action==='select'){
+        addHistoryRemarkToSelection(which,value);
+        return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    if(action==='edit')editRemarkHistoryOption(value);
+    if(action==='delete')deleteRemarkHistory(value);
+}
+remarkOptions.addEventListener('click',event=>handleRemarkOptionClick(event,'add'));
+editRemarkOptions.addEventListener('click',event=>handleRemarkOptionClick(event,'edit'));
 
 remarkSelected.addEventListener('click',event=>{
     const button=event.target.closest('.selected-remark-remove[data-value]');
@@ -2137,26 +2145,6 @@ editRemarkSelected.addEventListener('click',event=>{
     const button=event.target.closest('.selected-remark-remove[data-value]');
     if(button)removeSelectedRemark('edit',button.dataset.value);
 });
-
-remarkManageTop.addEventListener('click',()=>{
-    if(!admin()){
-        showToast('请先配置并验证 Token','error');
-        return;
-    }
-    closeRemarkPanels();
-    openRemarkManager();
-});
-
-remarkHistoryList.addEventListener('click',event=>{
-    const row=event.target.closest('.history-row');
-    if(!row)return;
-    const oldValue=row.dataset.old;
-    const input=row.querySelector('input');
-    if(event.target.closest('.history-save'))renameRemarkHistory(oldValue,input.value);
-    if(event.target.closest('.history-delete'))deleteRemarkHistory(oldValue);
-});
-
-remarkManagerClose.addEventListener('click',()=>remarkManagerModal.classList.add('hidden'));
 
 document.addEventListener('click',event=>{
     const addInsidePanel=remarkPanel.contains(event.target);
@@ -2237,10 +2225,6 @@ fileInput.addEventListener('change',()=>{
 document.addEventListener('keydown',event=>{
     if(event.key!=='Escape')return;
 
-    if(!remarkManagerModal.classList.contains('hidden')){
-        remarkManagerModal.classList.add('hidden');
-        return;
-    }
     if(!editModal.classList.contains('hidden')){
         closeEdit();
         return;
