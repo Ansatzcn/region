@@ -2091,10 +2091,11 @@ remarkInput.addEventListener('keydown',event=>{
     if(event.key==='Enter'){
         event.preventDefault();
 
-        // 备注栏有内容：先把当前备注确认成标签。
+        // 备注栏有内容：先把当前备注确认成标签；无论是新选项还是已有选项，
+        // Enter 确认后都立即收起下拉，避免菜单继续遮挡后续操作。
         if(clean(remarkInput.value)){
             const committed=commitRemark('add');
-            if(committed&&addSelected.length>1)setRemarkPanelOpen('add',false);
+            if(committed)setRemarkPanelOpen('add',false);
             return;
         }
 
@@ -2116,7 +2117,8 @@ editRemarkInput.addEventListener('keydown',event=>{
         event.preventDefault();
         const hadMultiple=editSelected.length>1;
         const committed=clean(editRemarkInput.value)?commitRemark('edit'):false;
-        if((committed&&editSelected.length>1)||(!committed&&hadMultiple))setRemarkPanelOpen('edit',false);
+        // 编辑弹窗同样：Enter 提交任意备注后立即收起；空输入时多选确认也收起。
+        if(committed||hadMultiple)setRemarkPanelOpen('edit',false);
     }
 });
 
