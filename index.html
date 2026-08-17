@@ -1036,8 +1036,10 @@ function renderRemarkCombo(which){
     else editSelected=selected;
 
     const selectedKeys=new Set(selected.map(key));
-    // 已选项仍保留在下拉历史中，确保每个历史选项始终都能直接编辑或删除。
-    const history=sortRemarks(state.remarks);
+    const query=key(ctx.input.value);
+    // 已选项仍保留在下拉历史中；键入内容时按“包含”关系筛选候选项。
+    // 使用与去重相同的规范化 key，兼容大小写和全/半角差异。
+    const history=sortRemarks(state.remarks).filter(v=>!query||key(v).includes(query));
 
     ctx.options.innerHTML=history.length
         ? `<div class="remark-option-list">${history.map(v=>`
@@ -1047,7 +1049,7 @@ function renderRemarkCombo(which){
                 <button class="remark-option-delete" type="button" data-action="delete" data-value="${attr(v)}">删除</button>
             </div>
         `).join('')}</div>`
-        : '<div class="remark-empty">暂无其它备注</div>';
+        : `<div class="remark-empty">${query?'没有包含该内容的备注':'暂无其它备注'}</div>`;
 
     ctx.selectedEl.innerHTML=selected.map(v=>`
         <span class="selected-remark">
@@ -2084,8 +2086,16 @@ editRemarkTrigger.addEventListener('click',event=>{
     renderRemarkCombo('edit');
 });
 
-remarkInput.addEventListener('input',()=>renderRemarkCombo('add'));
-editRemarkInput.addEventListener('input',()=>renderRemarkCombo('edit'));
+remarkInput.addEventListener('input',()=>{
+    setRemarkPanelOpen('edit',false);
+    setRemarkPanelOpen('add',true);
+    renderRemarkCombo('add');
+});
+editRemarkInput.addEventListener('input',()=>{
+    setRemarkPanelOpen('add',false);
+    setRemarkPanelOpen('edit',true);
+    renderRemarkCombo('edit');
+});
 
 remarkInput.addEventListener('keydown',event=>{
     if(event.key==='Enter'){
