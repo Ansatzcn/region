@@ -2109,14 +2109,8 @@ remarkInput.addEventListener('keydown',event=>{
             return;
         }
 
-        // 已经选中多个备注时，空输入框按 Enter 只负责立即收起下拉，
-        // 避免用户确认多选结果时误触发整条“添加”。
-        if(addSelected.length>1){
-            setRemarkPanelOpen('add',false);
-            return;
-        }
-
-        // 只有未形成多选时，空输入框再次按 Enter 才等同点击“添加”按钮。
+        // 备注输入框为空时，说明当前备注选择已经完成。
+        // 无论已选择一个还是多个备注，Enter 都直接等同点击主“添加”按钮。
         addEntry();
         closeRemarkPanels();
         regionInput.focus();
