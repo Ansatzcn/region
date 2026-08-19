@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,interactive-widget=resizes-content">
-<meta name="app-build" content="2026-08-17-region-dropdown-row-edit-delete-v1">
+<meta name="app-build" content="2026-08-19-region-dropdown-short-actions-live-count-v1">
 <title>Region</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -554,20 +554,27 @@ button{cursor:pointer}
     right:16px;
     top:70%;
     z-index:900;
-    padding:.45rem .72rem;
+    width:33px;
+    height:33px;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     transform:translateY(-50%);
-    border:1px solid rgba(148,163,184,.45);
-    border-radius:999px;
-    background:rgba(255,255,255,.82);
-    color:#64748b;
-    font-size:.76rem;
+    border:0;
+    border-radius:50%;
+    background:#2563eb;
+    color:#fff;
+    font-size:.72rem;
+    line-height:1;
+    box-shadow:0 3px 10px rgba(37,99,235,.28);
     opacity:0;
     visibility:hidden;
     pointer-events:none;
     transition:.2s
 }
-.back-to-top.visible{opacity:.55;visibility:visible;pointer-events:auto}
-.back-to-top:hover{opacity:1}
+.back-to-top.visible{opacity:1;visibility:visible;pointer-events:auto}
+.back-to-top:hover,.back-to-top:focus-visible{background:#1d4ed8;outline:none}
 
 @media(max-width:700px){
     body{padding:.8rem}
@@ -1004,10 +1011,16 @@ function loadLocal(){
     }
     render();
 }
+function updateCountDisplay(){
+    const entryCount=Array.isArray(state.entries)?state.entries.length:0;
+    const remarkCount=sortRemarks(Array.isArray(state.remarks)?state.remarks:[]).length;
+    countDisplay.textContent=`${entryCount}/${remarkCount}`;
+}
 function addRemarkHistory(value){
     const v=clean(value);
     if(!v)return;
     state.remarks=sortRemarks([...state.remarks,v]);
+    updateCountDisplay();
 }
 
 // ---------- 备注下拉 ----------
@@ -1045,8 +1058,8 @@ function renderRemarkCombo(which){
         ? `<div class="remark-option-list">${history.map(v=>`
             <div class="remark-option-row" data-value="${attr(v)}">
                 <button class="remark-option" type="button" data-action="select" data-value="${attr(v)}" aria-selected="${selectedKeys.has(key(v))?'true':'false'}">${selectedKeys.has(key(v))?'✓ ':''}${esc(v)}</button>
-                <button class="remark-option-edit" type="button" data-action="edit" data-value="${attr(v)}">编辑</button>
-                <button class="remark-option-delete" type="button" data-action="delete" data-value="${attr(v)}">删除</button>
+                <button class="remark-option-edit" type="button" data-action="edit" data-value="${attr(v)}">改</button>
+                <button class="remark-option-delete" type="button" data-action="delete" data-value="${attr(v)}">删</button>
             </div>
         `).join('')}</div>`
         : `<div class="remark-empty">${query?'没有包含该内容的备注':'暂无其它备注'}</div>`;
@@ -1134,6 +1147,7 @@ function deleteRemarkHistory(value){
 
 已有条目中的备注不会改变。`))return;
     state.remarks=sortRemarks(state.remarks.filter(x=>key(x)!==key(v)));
+    updateCountDisplay();
     saveLocal();
     renderRemarkCombo('add');
     renderRemarkCombo('edit');
@@ -1144,7 +1158,7 @@ function deleteRemarkHistory(value){
 // ---------- 总表 ----------
 function render(){
     state=normalizeState(state);
-    countDisplay.textContent=String(state.entries.length);
+    updateCountDisplay();
 
     const canManage=admin();
     tableBody.innerHTML=state.entries.length
