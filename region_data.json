@@ -864,12 +864,6 @@
       "remarkOrder": []
     },
     {
-      "id": "399c016c-76a1-44a4-ba0b-59367b51db8a",
-      "region": "659001新疆维吾尔自治区石河子市",
-      "remarks": [],
-      "remarkOrder": []
-    },
-    {
       "id": "b7b82afa-1a20-420b-a204-db1d55dfcba8",
       "region": "659001新疆维吾尔自治区石河子市",
       "remarks": [
@@ -878,6 +872,12 @@
       "remarkOrder": [
         "650300新疆维吾尔自治区石河子市"
       ]
+    },
+    {
+      "id": "399c016c-76a1-44a4-ba0b-59367b51db8a",
+      "region": "659002新疆维吾尔自治区阿拉尔市",
+      "remarks": [],
+      "remarkOrder": []
     }
   ],
   "remarks": [
