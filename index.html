@@ -723,6 +723,23 @@ html,body,button,input,select,option,textarea{
     display:none!important;
 }
 
+
+/* ===== 2026-08-27：总表文字统一纯黑 ===== */
+.region-table,
+.region-table th,
+.region-table td,
+.region-table th *,
+.region-table td *,
+.region-table .region-name,
+.region-table .region-remarks,
+.region-table .region-remark,
+.region-table .region-edit-link,
+.region-table .region-edit-link:hover,
+.region-table .region-edit-link:focus-visible,
+.region-table .empty-row td{
+    color:#000!important;
+}
+
 </style>
 </head>
 <body>
@@ -2328,13 +2345,23 @@ document.addEventListener('keydown',event=>{
 backToTopBtn.addEventListener('click',()=>{
     const startY=window.scrollY||window.pageYOffset||0;
     if(startY<=0)return;
+
+    // 回到顶部动画固定为 50ms；临时关闭 CSS smooth，避免叠加导致实际速度变慢。
     const duration=50;
+    const root=document.documentElement;
+    const previousInlineScrollBehavior=root.style.scrollBehavior;
+    root.style.scrollBehavior='auto';
+
     const startTime=performance.now();
     const animate=now=>{
         const progress=Math.min(1,(now-startTime)/duration);
         const eased=1-Math.pow(1-progress,2);
         window.scrollTo(0,Math.round(startY*(1-eased)));
-        if(progress<1)requestAnimationFrame(animate);
+        if(progress<1){
+            requestAnimationFrame(animate);
+        }else{
+            root.style.scrollBehavior=previousInlineScrollBehavior;
+        }
     };
     requestAnimationFrame(animate);
 });
