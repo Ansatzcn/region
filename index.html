@@ -740,6 +740,43 @@ html,body,button,input,select,option,textarea{
     color:#000!important;
 }
 
+
+/* ===== Region：区划代码 / 文字分两行 ===== */
+.region-code-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:1rem;
+    width:100%;
+}
+
+.region-code,
+.region-text{
+    display:block;
+    min-width:0;
+    color:#000!important;
+    font-size:1.1rem!important;
+    font-weight:700;
+    line-height:1.5;
+    overflow-wrap:anywhere;
+}
+
+.region-text{
+    margin-top:0;
+}
+
+.region-code-row .region-edit-link{
+    flex:0 0 auto;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    height:1.65rem;
+    min-height:1.65rem;
+    margin:0;
+    padding:0;
+    line-height:1;
+}
+
 </style>
 </head>
 <body>
@@ -1242,6 +1279,26 @@ function deleteRemarkHistory(value){
 }
 
 // ---------- 总表 ----------
+function splitRegionDisplay(value){
+    const raw=clean(value);
+    if(!raw)return{code:'',name:''};
+
+    // 优先识别常见行政区划代码：6 位数字，可与名称之间无空格。
+    let match=raw.match(/^(\d{6})\s*(.*)$/);
+    if(match&&match[2]){
+        return{code:match[1],name:match[2].trim()};
+    }
+
+    // 兼容其它“代码 + 空格 + 名称”的写法。
+    match=raw.match(/^([A-Za-z0-9._-]+)\s+(.+)$/);
+    if(match){
+        return{code:match[1],name:match[2].trim()};
+    }
+
+    // 无法拆分时保持原内容，不改数据。
+    return{code:raw,name:''};
+}
+
 function render(){
     state=normalizeState(state);
     updateCountDisplay();
@@ -1256,7 +1313,11 @@ function render(){
             const editLink=canManage
                 ? `<button class="region-edit-link" data-id="${attr(item.id)}" type="button">编辑</button>`
                 : '';
-            return `<tr><td><div class="region-title-row"><div class="region-name">${esc(item.region)}</div>${editLink}</div>${remarks}</td></tr>`;
+            const regionDisplay=splitRegionDisplay(item.region);
+            const regionText=regionDisplay.name
+                ? `<div class="region-name region-text">${esc(regionDisplay.name)}</div>`
+                : '';
+            return `<tr><td><div class="region-code-row"><div class="region-name region-code">${esc(regionDisplay.code)}</div>${editLink}</div>${regionText}${remarks}</td></tr>`;
         }).join('')
         : `<tr class="empty-row"><td colspan="1">暂无条目</td></tr>`;
 
