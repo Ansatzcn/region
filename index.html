@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,interactive-widget=resizes-content">
-<meta name="app-build" content="2026-08-19-region-dropdown-short-actions-live-count-v1">
+<meta name="app-build" content="2026-08-27-region-font-theme-top50ms-v3">
 <title>Region</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -13,7 +13,7 @@ body{
     padding:2rem 1rem 4rem;
     background:#f5f7fa;
     color:#0f172a;
-    font-family:"Times New Roman","Microsoft YaHei","PingFang SC",serif
+    font-family:"Times New Roman","SimSun","宋体","STSong",serif
 }
 button,input,select{font:inherit}
 button{cursor:pointer}
@@ -81,8 +81,8 @@ button{cursor:pointer}
 }
 .btn:hover{background:#f1f5f9;border-color:#94a3b8}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.btn-sync{border-color:#2563eb;background:#2563eb;color:#fff}
-.btn-sync:hover{background:#1d4ed8}
+.btn-sync{border-color:#1E40AF;background:#1E40AF;color:#fff}
+.btn-sync:hover{background:#1E3A8A}
 .last-sync{color:#94a3b8;font-size:.8rem}
 
 .add-section{
@@ -190,7 +190,7 @@ button{cursor:pointer}
     overflow-wrap:anywhere
 }
 .remark-option:hover,.remark-option:focus-visible{background:#f1f5f9;outline:none}
-.remark-option[aria-selected="true"]{color:#1d4ed8;font-weight:650}
+.remark-option[aria-selected="true"]{color:#1E3A8A;font-weight:650}
 .remark-option-edit,.remark-option-delete{
     padding:.42rem .58rem;
     border:0;
@@ -199,7 +199,7 @@ button{cursor:pointer}
     font-weight:650;
     white-space:nowrap
 }
-.remark-option-edit{background:#eff6ff;color:#1d4ed8}
+.remark-option-edit{background:#eff6ff;color:#1E3A8A}
 .remark-option-edit:hover{background:#dbeafe}
 .remark-option-delete{background:#fff1f2;color:#be123c}
 .remark-option-delete:hover{background:#ffe4e6}
@@ -324,7 +324,7 @@ button{cursor:pointer}
     background:none;
     box-shadow:none;
     color:#64748b;
-    font-family:'Segoe UI',Roboto,system-ui,sans-serif;
+    font-family:inherit;
     font-size:.9rem;
     font-weight:500;
     line-height:1.5;
@@ -337,7 +337,7 @@ button{cursor:pointer}
 .region-edit-link:focus-visible{
     background:none;
     box-shadow:none;
-    color:#1e3a8a;
+    color:#1E3A8A;
     outline:none
 }
 .region-remarks{
@@ -362,7 +362,7 @@ button{cursor:pointer}
     font-size:.82rem;
     font-weight:650
 }
-.edit-btn{background:#dbeafe;color:#1e3a8a}
+.edit-btn{background:#dbeafe;color:#1E3A8A}
 .edit-btn:hover{background:#bfdbfe}
 .delete-btn{background:#fee2e2;color:#991b1b}
 .delete-btn:hover{background:#fecaca}
@@ -492,7 +492,7 @@ button{cursor:pointer}
     font-size:.78rem;
     font-weight:650
 }
-.history-save{background:#dbeafe;color:#1e3a8a}
+.history-save{background:#dbeafe;color:#1E3A8A}
 .history-delete{background:#fee2e2;color:#991b1b}
 .history-empty{
     padding:1.2rem;
@@ -527,7 +527,7 @@ button{cursor:pointer}
     font-size:.76rem;
     line-height:1.5
 }
-.hint a{color:#2563eb;text-decoration:none}
+.hint a{color:#1E40AF;text-decoration:none}
 
 .toast{
     position:fixed;
@@ -538,7 +538,7 @@ button{cursor:pointer}
     padding:.78rem 1.5rem;
     transform:translateX(-50%);
     border-radius:999px;
-    background:#2563eb;
+    background:#1E40AF;
     color:#fff;
     font-size:.88rem;
     font-weight:600;
@@ -547,7 +547,7 @@ button{cursor:pointer}
 }
 .toast.success{background:#16a34a}
 .toast.error{background:#dc2626}
-.toast.info{background:#2563eb}
+.toast.info{background:#1E40AF}
 
 .back-to-top{
     position:fixed;
@@ -563,18 +563,18 @@ button{cursor:pointer}
     transform:translateY(-50%);
     border:0;
     border-radius:50%;
-    background:#2563eb;
+    background:#1E40AF;
     color:#fff;
     font-size:.72rem;
     line-height:1;
-    box-shadow:0 3px 10px rgba(37,99,235,.28);
+    box-shadow:0 3px 10px rgba(30,64,175,.28);
     opacity:0;
     visibility:hidden;
     pointer-events:none;
     transition:.2s
 }
 .back-to-top.visible{opacity:1;visibility:visible;pointer-events:auto}
-.back-to-top:hover,.back-to-top:focus-visible{background:#1d4ed8;outline:none}
+.back-to-top:hover,.back-to-top:focus-visible{background:#1E3A8A;outline:none}
 
 @media(max-width:700px){
     body{padding:.8rem}
@@ -654,6 +654,75 @@ button{cursor:pointer}
     .history-delete{grid-column:2}
     .back-to-top{right:8px}
 }
+
+
+/* ===== 2026-08-27：字号 / 字体 / 主色统一 ===== */
+/* Times New Roman 覆盖英文与数字；其不含汉字字形时自动回退到宋体。 */
+html,body,button,input,select,option,textarea{
+    font-family:"Times New Roman","SimSun","宋体","STSong",serif!important;
+}
+
+/* 总表字号：区划 1.1rem；备注 1rem（桌面与手机一致）。 */
+.region-table .region-name{
+    font-size:1.1rem!important;
+}
+.region-table .region-remarks,
+.region-table .region-remark{
+    font-size:1rem!important;
+}
+
+/* 主色 #1E40AF；悬停色 #1E3A8A。 */
+.btn-sync,
+.add-button,
+.dialog-btn.primary,
+.toast.info,
+.back-to-top{
+    background:#1E40AF!important;
+}
+.btn-sync{
+    border-color:#1E40AF!important;
+}
+.btn-sync:hover,
+.btn-sync:focus-visible,
+.add-button:hover,
+.add-button:focus-visible,
+.dialog-btn.primary:hover,
+.dialog-btn.primary:focus-visible,
+.back-to-top:hover,
+.back-to-top:focus-visible{
+    background:#1E3A8A!important;
+}
+.hint a,
+.remark-option[aria-selected="true"],
+.remark-option-edit,
+.edit-btn,
+.history-save{
+    color:#1E40AF!important;
+}
+.hint a:hover,
+.hint a:focus-visible,
+.region-edit-link:hover,
+.region-edit-link:focus-visible{
+    color:#1E3A8A!important;
+}
+
+/* 回到顶部：主色实心圆，无箭头、无文字。 */
+.back-to-top{
+    border:0!important;
+    border-radius:50%!important;
+    color:#1E40AF!important;
+    font-size:0!important;
+    line-height:0!important;
+    text-indent:-9999px!important;
+    overflow:hidden!important;
+    box-shadow:0 3px 10px rgba(30,64,175,.28)!important;
+}
+.back-to-top::before,
+.back-to-top::after{
+    content:none!important;
+    display:none!important;
+}
+
 </style>
 </head>
 <body>
@@ -2256,7 +2325,19 @@ document.addEventListener('keydown',event=>{
     closeRemarkPanels();
 });
 
-backToTopBtn.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
+backToTopBtn.addEventListener('click',()=>{
+    const startY=window.scrollY||window.pageYOffset||0;
+    if(startY<=0)return;
+    const duration=50;
+    const startTime=performance.now();
+    const animate=now=>{
+        const progress=Math.min(1,(now-startTime)/duration);
+        const eased=1-Math.pow(1-progress,2);
+        window.scrollTo(0,Math.round(startY*(1-eased)));
+        if(progress<1)requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+});
 addEventListener('scroll',()=>{
     backToTopBtn.classList.toggle('visible',scrollY>260);
 },{passive:true});
