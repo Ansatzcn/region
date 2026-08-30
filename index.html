@@ -2408,7 +2408,7 @@ backToTopBtn.addEventListener('click',()=>{
     if(startY<=0)return;
 
     // 回到顶部动画固定为 50ms；临时关闭 CSS smooth，避免叠加导致实际速度变慢。
-    const duration=50;
+    const duration=10;
     const root=document.documentElement;
     const previousInlineScrollBehavior=root.style.scrollBehavior;
     root.style.scrollBehavior='auto';
